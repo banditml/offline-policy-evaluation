@@ -26,6 +26,7 @@ All models can handle 3 types of features:
   * (e.g. `['t-shirt', 'jeans', ...]`)
 * ID list (high-cardinality discrete features)
   * (e.g. `['productId1', 'productId2', ..., 'productId1001']`)
+  * Handled via. embedding tables
 
 Models supported:
 - [x] Neural contextual bandit with ε-greedy exploration
