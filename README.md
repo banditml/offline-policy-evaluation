@@ -27,7 +27,7 @@ All models can handle 3 types of features:
 * ID list (high-cardinality discrete features)
   * (e.g. `['productId1', 'productId2', ..., 'productId1001']`)
 
-Models supported
+Models supported:
 - [x] Neural contextual bandit with ε-greedy exploration
 - [ ] [Neural contextual bandit with UCB-based exploration](https://arxiv.org/abs/1911.04462)
 - [ ] [Deep Q-learning with ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
