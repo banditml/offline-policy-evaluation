@@ -28,10 +28,10 @@ All models can handle 3 types of features:
 -- (e.g. `['productId1', 'productId2', ..., 'productId1001']`)
 
 Models supported
-[X] Neural contextual bandit with ε-greedy exploration
-[ ] [Neural contextual bandit with UCB-based exploration](https://arxiv.org/abs/1911.04462)
-[ ] [Deep Q-learning ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
-[ ] [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
+- [x] Neural contextual bandit with ε-greedy exploration
+- [ ] [Neural contextual bandit with UCB-based exploration](https://arxiv.org/abs/1911.04462)
+- [ ] [Deep Q-learning ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
+- [ ] [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
 
 
 ## Docs
