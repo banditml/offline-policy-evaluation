@@ -20,12 +20,12 @@ This repo holds the open source machine learning code that powers banditml.com. 
 
 ## Supported models
 All models can handle 3 types of features:
-- Numeric (standard floating point features)
--- (e.g. `[12.5, 1.3, ...]`)
-- Categorical (low-cardinality discrete features)
--- (e.g. `['t-shirt', 'jeans', ...]`)
-- ID list (high-cardinality discrete features)
--- (e.g. `['productId1', 'productId2', ..., 'productId1001']`)
+* Numeric (standard floating point features)
+  * (e.g. `[12.5, 1.3, ...]`)
+* Categorical (low-cardinality discrete features)
+  * (e.g. `['t-shirt', 'jeans', ...]`)
+* ID list (high-cardinality discrete features)
+  * (e.g. `['productId1', 'productId2', ..., 'productId1001']`)
 
 Models supported
 - [x] Neural contextual bandit with ε-greedy exploration
