@@ -4,10 +4,10 @@
     "decisions_table_name": "gradient-decision.gradient_app_staging.decisions",
     "rewards_table_name": "gradient-decision.gradient_app_staging.rewards"
   },
-  "max_epochs": 30,
+  "max_epochs": 10,
   "learning_rate": 0.01,
   "l2_decay": 0.01,
-  "batch_size": 128,
+  "batch_size": 64,
   "model": {
     "layers": [-1, 32, 16, -1],
     "activations": ["relu", "relu", "linear"]
