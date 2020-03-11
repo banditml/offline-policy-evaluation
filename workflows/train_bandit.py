@@ -28,10 +28,10 @@ def get_experiment_specific_params():
     and get specific training configs. TODO: fill this in with a request."""
 
     return {
-        "experiment_id": "3bfce0dc-755e-4bb0-97e3-08c1981f5701",
+        "experiment_id": "test-experiment-1",
         "decisions_ds_start": "2020-03-09",
-        "decisions_ds_end": "2020-03-11",
-        "rewards_ds_end": "2020-03-12",
+        "decisions_ds_end": "2020-03-13",
+        "rewards_ds_end": "2020-03-15",
         "features": {
             "productsInCart": {
                 "type": "P",
@@ -50,8 +50,8 @@ def get_experiment_specific_params():
             },
             "decision": {"type": "P", "possible_values": None, "product_set_id": "1"},
         },
-        "reward_function": {"purchase": 0, "totalCartValue": 1},
-        "product_sets": {"1": [i for i in range(1, 41)]},
+        "reward_function": {"purchase": 0, "addOn$Spent": 1},
+        "product_sets": {"1": [i for i in range(1, 12 + 1)]},
     }
 
 
@@ -181,7 +181,7 @@ def data_to_pytorch(
     data: Dict, features: Dict, product_sets: Dict[str, List]
 ) -> Tuple[Dict, torch.tensor]:
     X_float = torch.tensor(data["X_float"].values, dtype=torch.float32)
-    X_id_list = None
+    X_id_list, X_id_list_idxs = None, None
 
     # hack needed due to skorch not handling objects in .fit() besides
     # a dict of lists or tensors (dict of dicts not supported.)
@@ -193,7 +193,7 @@ def data_to_pytorch(
         if series.dtype == int:
             series = series.apply(lambda x: [x])
 
-        pre_pad = [torch.tensor(i) for i in series]
+        pre_pad = [torch.tensor(i, dtype=torch.long) for i in series]
         post_pad = pad_sequence(pre_pad, batch_first=True, padding_value=0)
         idx_offset = post_pad.shape[1]
         id_list_pad_idxs.extend([pad_idx, pad_idx + idx_offset])
@@ -206,7 +206,8 @@ def data_to_pytorch(
 
     # skorch requires all inputs to .fit() to have the same length so we
     # need to repeat our id_list_pad_idxs list.
-    X_id_list_idxs = torch.tensor([id_list_pad_idxs for i in X_id_list])
+    if X_id_list:
+        X_id_list_idxs = torch.tensor([id_list_pad_idxs for i in X_id_list])
 
     y = torch.tensor(data["y"].values, dtype=torch.float32).unsqueeze(dim=1)
     return X_float, X_id_list, X_id_list_idxs, y

@@ -10,7 +10,7 @@ The goal is to optimize the incremental $'s generated
 during checkout from recommended items.
 
 Usage:
-    python scripts/write_test_dataset_to_bq.py
+    python scripts/write_ecommerce_dataset_to_bq.py
 """
 
 from collections import defaultdict
