@@ -36,4 +36,11 @@ Models supported:
 
 
 ## Docs
-Coming soon!
+Official docs coming soon!
+
+Simple docs below:
+
+Run all tests:
+```
+python -m unittest
+```
