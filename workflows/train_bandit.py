@@ -11,6 +11,7 @@ from typing import Dict, List, NoReturn, Tuple
 from google.cloud import bigquery
 from google.oauth2 import service_account
 import pandas as pd
+from sklearn.utils import shuffle
 from sklearn import preprocessing
 from skorch import NeuralNetRegressor
 import torch
@@ -28,30 +29,21 @@ def get_experiment_specific_params():
     and get specific training configs. TODO: fill this in with a request."""
 
     return {
-        "experiment_id": "test-experiment-1",
+        "experiment_id": "test-experiment-height-prediction",
         "decisions_ds_start": "2020-03-09",
-        "decisions_ds_end": "2020-03-13",
-        "rewards_ds_end": "2020-03-15",
+        "decisions_ds_end": "2020-03-12",
+        "rewards_ds_end": "2020-03-13",
         "features": {
-            "productsInCart": {
-                "type": "P",
-                "possible_values": None,
-                "product_set_id": "1",
-            },
-            "totalCartValue": {
-                "type": "N",
-                "possible_values": None,
-                "product_set_id": None,
-            },
-            "trafficSource": {
+            "country": {"type": "P", "possible_values": None, "product_set_id": "1"},
+            "year": {"type": "N", "possible_values": None, "product_set_id": None},
+            "decision": {
                 "type": "C",
-                "possible_values": [0, 1, 2, 3],
+                "possible_values": [0, 1],
                 "product_set_id": None,
             },
-            "decision": {"type": "P", "possible_values": None, "product_set_id": "1"},
         },
-        "reward_function": {"purchase": 0, "addOn$Spent": 1},
-        "product_sets": {"1": [i for i in range(1, 12 + 1)]},
+        "reward_function": {"height": 1},
+        "product_sets": {"1": [i for i in range(1, 5 + 1)]},
     }
 
 
@@ -87,6 +79,9 @@ def get_feature_order(features_spec: Dict) -> List[str]:
 def preprocess_data(
     raw_data: pd.DataFrame, params: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+    # start by randomizing the data upfront
+    raw_data = shuffle(raw_data)
 
     # load the json string into json objects and expand into columns &
     # fill metrics NaN's with 0's.
@@ -180,7 +175,11 @@ def build_pytorch_net(
 def data_to_pytorch(
     data: Dict, features: Dict, product_sets: Dict[str, List]
 ) -> Tuple[Dict, torch.tensor]:
-    X_float = torch.tensor(data["X_float"].values, dtype=torch.float32)
+    X = {}
+
+    if len(data["X_float"]) > 0:
+        X["X_float"] = torch.tensor(data["X_float"].values, dtype=torch.float32)
+
     X_id_list, X_id_list_idxs = None, None
 
     # hack needed due to skorch not handling objects in .fit() besides
@@ -206,11 +205,30 @@ def data_to_pytorch(
 
     # skorch requires all inputs to .fit() to have the same length so we
     # need to repeat our id_list_pad_idxs list.
-    if X_id_list:
-        X_id_list_idxs = torch.tensor([id_list_pad_idxs for i in X_id_list])
+    if X_id_list is not None:
+        X["X_id_list"] = X_id_list
+        X["X_id_list_idxs"] = torch.tensor([id_list_pad_idxs for i in X_id_list])
 
     y = torch.tensor(data["y"].values, dtype=torch.float32).unsqueeze(dim=1)
-    return X_float, X_id_list, X_id_list_idxs, y
+
+    return X, y
+
+
+def fit_custom_pytorch_module_w_skorch(module, X, y, hyperparams):
+    """Fit a custom PyTorch module using Skorch."""
+
+    skorch_net = NeuralNetRegressor(
+        module=module,
+        optimizer=torch.optim.Adam,
+        lr=hyperparams["learning_rate"],
+        optimizer__weight_decay=hyperparams["l2_decay"],
+        max_epochs=hyperparams["max_epochs"],
+        batch_size=hyperparams["batch_size"],
+        iterator_train__shuffle=True,
+    )
+
+    skorch_net.fit(X, y)
+    return skorch_net
 
 
 def train(shared_params: Dict):
@@ -235,6 +253,13 @@ def train(shared_params: Dict):
 
     data = preprocess_data(raw_data, experiment_specific_params)
 
+    # convert data into format that pytorch module expects
+    X, y = data_to_pytorch(
+        data,
+        experiment_specific_params["features"],
+        experiment_specific_params["product_sets"],
+    )
+
     pytorch_net = build_pytorch_net(
         feature_specs=experiment_specific_params["features"],
         product_sets=experiment_specific_params["product_sets"],
@@ -244,27 +269,10 @@ def train(shared_params: Dict):
     )
     logger.info(f"Initialized model: {pytorch_net}")
 
-    skorch_net = NeuralNetRegressor(
-        module=pytorch_net,
-        optimizer=torch.optim.Adam,
-        lr=shared_params["learning_rate"],
-        optimizer__weight_decay=shared_params["l2_decay"],
-        max_epochs=shared_params["max_epochs"],
-        batch_size=shared_params["batch_size"],
-        iterator_train__shuffle=True,
-    )
-
-    # convert data into format that pytorch module expects
-    X_float, X_id_list, X_id_list_idxs, y = data_to_pytorch(
-        data,
-        experiment_specific_params["features"],
-        experiment_specific_params["product_sets"],
-    )
-
-    X = {"X_float": X_float, "X_id_list": X_id_list, "X_id_list_idxs": X_id_list_idxs}
-
     logger.info(f"Starting training: {shared_params['max_epochs']} epochs")
-    skorch_net.fit(X, y)
+    skorch_net = fit_custom_pytorch_module_w_skorch(
+        module=pytorch_net, X=X, y=y, hyperparams=shared_params
+    )
 
 
 def main(args):
