@@ -10,6 +10,7 @@ from typing import Dict, List, NoReturn, Tuple
 
 from google.cloud import bigquery
 from google.oauth2 import service_account
+import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
 from sklearn import preprocessing
@@ -34,7 +35,12 @@ def get_experiment_specific_params():
         "decisions_ds_end": "2020-03-12",
         "rewards_ds_end": "2020-03-13",
         "features": {
-            "country": {"type": "P", "possible_values": None, "product_set_id": "1"},
+            "country": {
+                "type": "P",
+                "possible_values": None,
+                "product_set_id": "1",
+                "use_dense": True,
+            },
             "year": {"type": "N", "possible_values": None, "product_set_id": None},
             "decision": {
                 "type": "C",
@@ -43,12 +49,27 @@ def get_experiment_specific_params():
             },
         },
         "reward_function": {"height": 1},
-        "product_sets": {"1": [i for i in range(1, 5 + 1)]},
+        "product_sets": {
+            "1": {
+                "ids": [1, 2, 3, 4, 5],
+                "dense": {
+                    1: [0, 10.0],
+                    2: [1, 8.5],
+                    3: [1, 7.5],
+                    4: [2, 11.5],
+                    5: [2, 10.5],
+                },
+                "features": [
+                    {"name": "region", "type": "C", "possible_values": [0, 1, 2]},
+                    {"name": "avg_shoe_size_m", "type": "N", "possible_values": None},
+                ],
+            }
+        },
     }
 
 
-def get_feature_order(features_spec: Dict) -> List[str]:
-    """Get order that featuers should be fed into the model. This will
+def get_preprocess_feature_order(features_spec: Dict) -> List[str]:
+    """Get order that featuers should be fed into the preprocessor. This will
     need to match bandit-app. For consistency, we will enforce the following
     ordering logic:
 
@@ -74,6 +95,34 @@ def get_feature_order(features_spec: Dict) -> List[str]:
     float_feature_order = N + C
     id_feature_order = P
     return float_feature_order, id_feature_order
+
+
+def preprocess_feature(
+    feature_name: str, feature_type: str, values: np.array
+) -> Tuple[pd.DataFrame, int]:
+    assert feature_type in ("N", "C")
+
+    # convert to scikit learn expected format
+    values = values.reshape(-1, 1)
+
+    if feature_type == "N":
+        # standard scaler seems to be right choice for numeric features
+        # in regression problems
+        # http://rajeshmahajan.com/standard-scaler-v-min-max-scaler-machine-learning/
+        preprocessor = preprocessing.StandardScaler()
+        values = preprocessor.fit_transform(values)
+        df = pd.DataFrame(values.squeeze(), columns=[feature_name])
+    elif feature_type == "C":
+        preprocessor = preprocessing.OneHotEncoder(sparse=False)
+        values = preprocessor.fit_transform(values)
+        preprocessor.col_names = [
+            feature_name + "_" + str(i) for i in preprocessor.categories_[0]
+        ]
+        df = pd.DataFrame(values.squeeze(), columns=preprocessor.col_names)
+    else:
+        raise Exception(f"Feature type {feature_type} not supported.")
+
+    return df, preprocessor
 
 
 def preprocess_data(
@@ -104,43 +153,51 @@ def preprocess_data(
     reward_df = X["reward"]
     float_feature_df = pd.DataFrame()
     id_list_feature_df = pd.DataFrame()
-    float_feature_order, id_feature_order = get_feature_order(params["features"])
+
+    # order in which to preprocess features
+    float_feature_order, id_feature_order = get_preprocess_feature_order(
+        params["features"]
+    )
+    # final features names after preprocessing & expansion of categoricals
+    final_float_feature_order, final_id_feature_order = [], []
 
     transforms = {}
     for feature_name in float_feature_order:
         meta = params["features"][feature_name]
-        # convert to scikit learn expected format
-        raw_values = X[feature_name].values.reshape(-1, 1)
-        if meta["type"] == "N":
-            # standard scaler seems to be right choice for numeric features
-            # in regression problems
-            # http://rajeshmahajan.com/standard-scaler-v-min-max-scaler-machine-learning/
-            preprocessor = preprocessing.StandardScaler()
-            values = preprocessor.fit_transform(raw_values)
-            float_feature_df[feature_name] = pd.Series(values.squeeze())
-            transforms[feature_name] = preprocessor
-        elif meta["type"] == "C":
-            preprocessor = preprocessing.OneHotEncoder(sparse=False)
-            values = preprocessor.fit_transform(raw_values)
-            preprocessor.col_names = [
-                feature_name + "_" + str(i) for i in preprocessor.categories_[0]
-            ]
-            float_feature_df[preprocessor.col_names] = pd.DataFrame(values)
-            transforms[feature_name] = preprocessor
-        else:
-            raise (f"Feature type {feature_name} not supported.")
+        df, preprocessor = preprocess_feature(
+            feature_name, meta["type"], X[feature_name].values
+        )
+        final_float_feature_order.extend(df.columns)
+        float_feature_df = pd.concat([float_feature_df, df], axis=1)
+        transforms[feature_name] = preprocessor
 
     for feature_name in id_feature_order:
         meta = params["features"][feature_name]
-        # convert to scikit learn expected format
-        raw_values = X[feature_name].values.reshape(-1, 1)
+        products_set_id = meta["product_set_id"]
+        product_set_meta = params["product_sets"][products_set_id]
+
         if meta["type"] == "P":
-            # id list features aren't preprocessed, instead they use an
-            # embedding table which is built into the pytorch model
-            id_list_feature_df[feature_name] = pd.Series(raw_values.squeeze())
-            transforms[feature_name] = params["features"][feature_name][
-                "product_set_id"
-            ]
+            # if dense is true then convert ID's into their dense features
+            if meta["use_dense"] is True and "dense" in product_set_meta:
+                dense = np.array(
+                    [product_set_meta["dense"][i] for i in X[feature_name].values]
+                )
+                for idx, feature in enumerate(product_set_meta["features"]):
+                    vals = dense[:, idx]
+                    df, preprocessor = preprocess_feature(
+                        feature["name"], feature["type"], vals
+                    )
+                    final_float_feature_order.extend(df.columns)
+                    float_feature_df = pd.concat([float_feature_df, df], axis=1)
+                    transforms[feature_name] = preprocessor
+            else:
+                # sparse id list features aren't preprocessed, instead they use an
+                # embedding table which is built into the pytorch model
+                final_id_feature_order.append(feature_name)
+                id_list_feature_df[feature_name] = pd.Series(X[feature_name].values)
+                transforms[feature_name] = params["features"][feature_name][
+                    "product_set_id"
+                ]
         else:
             raise (f"Feature type {feature_name} not supported.")
 
@@ -149,19 +206,23 @@ def preprocess_data(
         "X_float": float_feature_df,
         "X_id_list": id_list_feature_df,
         "transforms": transforms,
+        "final_float_feature_order": final_float_feature_order,
+        "final_id_feature_order": final_id_feature_order,
     }
 
 
-def num_float_dim(data):
-    return len(data["X_float"].columns)
-
-
 def build_pytorch_net(
-    feature_specs, product_sets, layers, activations, input_dim, output_dim=1
+    feature_specs,
+    product_sets,
+    float_feature_order,
+    layers,
+    id_feature_order,
+    activations,
+    input_dim,
+    output_dim=1,
 ):
     """Build PyTorch model that will be fed into skorch training."""
     layers[0], layers[-1] = input_dim, output_dim
-    float_feature_order, id_feature_order = get_feature_order(feature_specs)
     return EmbedDnn(
         layers,
         activations,
@@ -214,6 +275,10 @@ def data_to_pytorch(
     return X, y
 
 
+def num_float_dim(data):
+    return len(data["X_float"].columns)
+
+
 def fit_custom_pytorch_module_w_skorch(module, X, y, hyperparams):
     """Fit a custom PyTorch module using Skorch."""
 
@@ -263,6 +328,8 @@ def train(shared_params: Dict):
     pytorch_net = build_pytorch_net(
         feature_specs=experiment_specific_params["features"],
         product_sets=experiment_specific_params["product_sets"],
+        float_feature_order=data["final_float_feature_order"],
+        id_feature_order=data["final_id_feature_order"],
         layers=shared_params["model"]["layers"],
         activations=shared_params["model"]["activations"],
         input_dim=num_float_dim(data),

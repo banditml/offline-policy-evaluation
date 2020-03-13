@@ -50,12 +50,10 @@ class EmbedDnn(nn.Module):
         assert len(layers) >= 2, "Invalid layer schema {} for network".format(layers)
 
         # handle features that require embeddings
-        for feature_name, meta in feature_specs.items():
-            if meta["type"] != "P":
-                continue
-
+        for feature_name in id_feature_order:
+            meta = feature_specs[feature_name]
             product_set_id = meta["product_set_id"]
-            num_ids = len(product_sets[product_set_id])
+            num_ids = len(product_sets[product_set_id]["ids"])
             # embedding size rule of thumb written by google:
             # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
             embedding_dim = math.ceil(num_ids ** 0.25)
