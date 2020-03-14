@@ -1,6 +1,7 @@
 """
 Usage:
-    python -m workflows.train_bandit --params_path configs/bandit.json
+    python -m workflows.train_bandit --params_path configs/bandit.json \
+        --model_path trained_models/test.pkl
 """
 
 import argparse
@@ -20,6 +21,8 @@ from torch.nn.utils.rnn import pad_sequence
 
 from data_reader.bandit_reader import BigQueryReader
 from ml.models.embed_dnn import EmbedDnn
+from ml.serving.predictor import BanditPredictor
+from ml.serving.model_io import write_predictor_to_disk
 from utils.utils import get_logger, fancy_print, read_config
 
 logger = get_logger(__name__)
@@ -36,10 +39,10 @@ def get_experiment_specific_params():
         "rewards_ds_end": "2020-03-13",
         "features": {
             "country": {
-                "type": "P",
-                "possible_values": None,
+                "type": "C",
+                "possible_values": [1, 2, 3, 4, 5],
                 "product_set_id": "1",
-                "use_dense": True,
+                "use_dense": False,
             },
             "year": {"type": "N", "possible_values": None, "product_set_id": None},
             "decision": {
@@ -206,6 +209,8 @@ def preprocess_data(
         "X_float": float_feature_df,
         "X_id_list": id_list_feature_df,
         "transforms": transforms,
+        "float_feature_order": float_feature_order,
+        "id_feature_order": id_feature_order,
         "final_float_feature_order": final_float_feature_order,
         "final_id_feature_order": final_id_feature_order,
     }
@@ -248,7 +253,7 @@ def data_to_pytorch(
     id_list_pad_idxs = []
     pad_idx = 0
 
-    for series_name, series in data["X_id_list"].iteritems():
+    for _, series in data["X_id_list"].iteritems():
         # wrap decisions in lists
         if series.dtype == int:
             series = series.apply(lambda x: [x])
@@ -296,7 +301,7 @@ def fit_custom_pytorch_module_w_skorch(module, X, y, hyperparams):
     return skorch_net
 
 
-def train(shared_params: Dict):
+def train(shared_params: Dict, model_path: str = None):
     logger.info("Getting experiment config from banditml.com...")
     experiment_specific_params = get_experiment_specific_params()
     logger.info(f"Got experiment specific params: {experiment_specific_params}")
@@ -341,13 +346,23 @@ def train(shared_params: Dict):
         module=pytorch_net, X=X, y=y, hyperparams=shared_params
     )
 
+    if model_path is not None:
+        predictor = BanditPredictor(
+            experiment_specific_params=experiment_specific_params,
+            float_feature_order=data["float_feature_order"],
+            id_feature_order=data["id_feature_order"],
+            transforms=data["transforms"],
+            net=skorch_net,
+        )
+        write_predictor_to_disk(predictor, path=model_path)
+
 
 def main(args):
     start = time.time()
     fancy_print("Starting workflow", color="green", size=70)
     wf_params = read_config(args.params_path)
     logger.info("Using parameters: {}".format(wf_params))
-    train(wf_params)
+    train(wf_params, args.model_path)
     logger.info("Workflow completed successfully.")
     logger.info(f"Took {time.time() - start} seconds to complete.")
 
@@ -355,5 +370,6 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--params_path", required=True, type=str)
+    parser.add_argument("--model_path", required=False, type=str)
     args = parser.parse_args()
     main(args)

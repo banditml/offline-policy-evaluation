@@ -1,6 +1,9 @@
 ## Bigquery credentials
 credentials/*
 
+## Trained model files
+trained_models/*
+
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
