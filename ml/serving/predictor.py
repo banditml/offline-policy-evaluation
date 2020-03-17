@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import torch
 
+from ml.preprocessing import preprocessor
+
 
 class BanditPredictor:
     """Class used to make predictions given a trained bandit model."""
@@ -40,14 +42,20 @@ class BanditPredictor:
             values = transformer.transform(df[feature_name].values.reshape(-1, 1))
             float_feature_array = np.append(float_feature_array, values, axis=1)
 
-        for feature_name in self.float_feature_order:
-            pass
+        for feature_name in self.id_feature_order:
+            # sparse id list features aren't preprocessed, instead they use an
+            # embedding table which is built into the pytorch model
+            values = df[feature_name].values.reshape(-1, 1)
+            id_list_feature_array = np.append(id_list_feature_array, values, axis=1)
 
-        return {"X_float": float_feature_array}
+        return {
+            "X_float": pd.DataFrame(float_feature_array),
+            "X_id_list": pd.DataFrame(id_list_feature_array),
+        }
 
-    def preprocessed_input_to_pytorch(self, input):
-        X_float = torch.tensor(input["X_float"], dtype=torch.float32)
-        return {"X_float": X_float}
+    def preprocessed_input_to_pytorch(self, data):
+        X, _ = preprocessor.data_to_pytorch(data)
+        return X
 
     def predict(self, input):
         input = self.preprocess_input(input)
