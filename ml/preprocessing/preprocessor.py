@@ -119,30 +119,27 @@ def preprocess_data(
         products_set_id = meta["product_set_id"]
         product_set_meta = params["product_sets"][products_set_id]
 
-        if meta["type"] == "P":
+        if meta["use_dense"] is True and "dense" in product_set_meta:
             # if dense is true then convert ID's into their dense features
-            if meta["use_dense"] is True and "dense" in product_set_meta:
-                dense = np.array(
-                    [product_set_meta["dense"][i] for i in X[feature_name].values]
+            dense = np.array(
+                [product_set_meta["dense"][i] for i in X[feature_name].values]
+            )
+            for idx, feature in enumerate(product_set_meta["features"]):
+                vals = dense[:, idx]
+                df, preprocessor = preprocess_feature(
+                    feature["name"], feature["type"], vals
                 )
-                for idx, feature in enumerate(product_set_meta["features"]):
-                    vals = dense[:, idx]
-                    df, preprocessor = preprocess_feature(
-                        feature["name"], feature["type"], vals
-                    )
-                    final_float_feature_order.extend(df.columns)
-                    float_feature_df = pd.concat([float_feature_df, df], axis=1)
-                    transforms[feature_name] = preprocessor
-            else:
-                # sparse id list features aren't preprocessed, instead they use an
-                # embedding table which is built into the pytorch model
-                final_id_feature_order.append(feature_name)
-                id_list_feature_df[feature_name] = pd.Series(X[feature_name].values)
-                transforms[feature_name] = params["features"][feature_name][
-                    "product_set_id"
-                ]
+                final_float_feature_order.extend(df.columns)
+                float_feature_df = pd.concat([float_feature_df, df], axis=1)
+                transforms[feature["name"]] = preprocessor
         else:
-            raise (f"Feature type {feature_name} not supported.")
+            # sparse id list features aren't preprocessed, instead they use an
+            # embedding table which is built into the pytorch model
+            final_id_feature_order.append(feature_name)
+            id_list_feature_df[feature_name] = pd.Series(X[feature_name].values)
+            transforms[feature_name] = params["features"][feature_name][
+                "product_set_id"
+            ]
 
     return {
         "y": reward_df,

@@ -24,6 +24,13 @@ class BanditPredictor:
         self.transforms = transforms
         self.net = net
 
+    def transform_feature(self, vals, transformer=None):
+        vals = vals.reshape(-1, 1)
+        if transformer:
+            vals = transformer.transform(vals)
+
+        return vals
+
     def preprocess_input(self, input):
         # score all decisions so expand the input across decisions
         decision_meta = self.experiment_specific_params["features"]["decision"]
@@ -38,15 +45,33 @@ class BanditPredictor:
         id_list_feature_array = np.empty((len(df), 0))
 
         for feature_name in self.float_feature_order:
-            transformer = self.transforms[feature_name]
-            values = transformer.transform(df[feature_name].values.reshape(-1, 1))
+            values = self.transform_feature(
+                df[feature_name].values, self.transforms[feature_name]
+            )
             float_feature_array = np.append(float_feature_array, values, axis=1)
 
         for feature_name in self.id_feature_order:
-            # sparse id list features aren't preprocessed, instead they use an
-            # embedding table which is built into the pytorch model
-            values = df[feature_name].values.reshape(-1, 1)
-            id_list_feature_array = np.append(id_list_feature_array, values, axis=1)
+            meta = self.experiment_specific_params["features"][feature_name]
+            product_set_id = meta["product_set_id"]
+            product_set_meta = self.experiment_specific_params["product_sets"][
+                product_set_id
+            ]
+            if meta["use_dense"] is True and "dense" in product_set_meta:
+                # if dense is true then convert ID's into their dense features
+                dense = np.array(
+                    [product_set_meta["dense"][i] for i in df[feature_name].values]
+                )
+                for idx, feature in enumerate(product_set_meta["features"]):
+                    vals = dense[:, idx]
+                    values = self.transform_feature(
+                        vals, self.transforms[feature["name"]]
+                    )
+                    float_feature_array = np.append(float_feature_array, values, axis=1)
+            else:
+                # sparse id list features aren't preprocessed, instead they use an
+                # embedding table which is built into the pytorch model
+                values = self.transform_feature(df[feature_name].values)
+                id_list_feature_array = np.append(id_list_feature_array, values, axis=1)
 
         return {
             "X_float": pd.DataFrame(float_feature_array),
