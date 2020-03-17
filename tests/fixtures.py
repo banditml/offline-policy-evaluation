@@ -69,11 +69,8 @@ class Params:
         "learning_rate": 0.001,
         "l2_decay": 0.0001,
         "batch_size": 64,
-        "model": {
-            "layers": [-1, 32, 16, -1],
-            "activations": ["relu", "relu", "linear"],
-        },
-        "train_test_split": 0.8,
+        "model": {"layers": [-1, 16, 8, -1], "activations": ["relu", "relu", "linear"]},
+        "train_test_split": 0.9,
     }
 
 
