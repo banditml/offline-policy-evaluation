@@ -46,3 +46,8 @@ Run all tests:
 ```
 python -m unittest
 ```
+
+Run tests for one module:
+```
+python -m unittest tests.ml.serving.test_predictor
+```

@@ -129,11 +129,12 @@ def preprocess_feature(
 
 
 def preprocess_data(
-    raw_data: pd.DataFrame, params: pd.DataFrame
+    raw_data: pd.DataFrame, params: pd.DataFrame, shuffle_data=True
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # start by randomizing the data upfront
-    raw_data = shuffle(raw_data)
+    if shuffle_data:
+        raw_data = shuffle(raw_data)
 
     # load the json string into json objects and expand into columns &
     # fill metrics NaN's with 0's.
