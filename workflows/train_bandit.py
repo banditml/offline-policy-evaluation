@@ -35,7 +35,7 @@ def get_experiment_specific_params():
                 "type": "P",
                 "possible_values": None,
                 "product_set_id": "1",
-                "use_dense": False,
+                "use_dense": True,
             },
             "year": {"type": "N", "possible_values": None, "product_set_id": None},
             "decision": {

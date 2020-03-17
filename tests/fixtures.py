@@ -66,8 +66,8 @@ class Params:
     SHARED_PARAMS = {
         "data_reader": {},
         "max_epochs": 50,
-        "learning_rate": 0.001,
-        "l2_decay": 0.0001,
+        "learning_rate": 0.002,
+        "l2_decay": 0.0003,
         "batch_size": 64,
         "model": {
             "layers": [-1, 32, 16, -1],
