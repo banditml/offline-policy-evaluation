@@ -125,3 +125,40 @@ class TestTrainBandit(unittest.TestCase):
         # the GBDT doesn't need as much training so make tolerance more forgiving
         assert test_mse < self.results_gbdt["mse_test"] * 1.1
         assert test_mse < self.results_mlp["mse_test"] * 1.05
+
+    def test_pytorch_model_country_as_id_list_and_decision_as_id_list(self):
+        pytorch_net = train_bandit.build_pytorch_net(
+            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+                "features"
+            ],
+            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+                "product_sets"
+            ],
+            float_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
+                "final_float_feature_order"
+            ],
+            id_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
+                "final_id_feature_order"
+            ],
+            layers=Params.SHARED_PARAMS["model"]["layers"],
+            activations=Params.SHARED_PARAMS["model"]["activations"],
+            input_dim=train_bandit.num_float_dim(
+                Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST
+            ),
+        )
+
+        skorch_net = train_bandit.fit_custom_pytorch_module_w_skorch(
+            module=pytorch_net,
+            X=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
+            y=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"],
+            hyperparams=Params.SHARED_PARAMS,
+        )
+
+        test_mse = skorch_net.history[-1]["valid_loss"]
+
+        # make sure mse is better or close to out of the box GBDT & MLP
+        # the GBDT doesn't need as much training so make tolerance more forgiving
+        # also this is learning 2 embedding tables so need more training time
+        # to be compeitive
+        assert test_mse < self.results_gbdt["mse_test"] * 1.15
+        assert test_mse < self.results_mlp["mse_test"] * 1.1

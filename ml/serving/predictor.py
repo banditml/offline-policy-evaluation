@@ -38,7 +38,12 @@ class BanditPredictor:
             decisions = decision_meta["possible_values"]
             expanded_input = [dict(input, **{"decision": d}) for d in decisions]
         elif decision_meta["type"] == "P":
-            pass
+            product_set_id = decision_meta["product_set_id"]
+            product_set = self.experiment_specific_params["product_sets"][
+                product_set_id
+            ]
+            decisions = product_set["ids"]
+            expanded_input = [dict(input, **{"decision": d}) for d in decisions]
 
         df = pd.DataFrame(expanded_input)
         float_feature_array = np.empty((len(df), 0))
