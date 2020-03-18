@@ -1,7 +1,9 @@
 """
 Usage:
-    python -m workflows.train_bandit --params_path configs/bandit.json \
-        --model_path trained_models/test.pkl
+    python -m workflows.train_bandit \
+        --params_path configs/bandit.json \
+        --experiment_config_path configs/example_experiment_config.json \
+        --model_path trained_models/model.pkl
 """
 
 import argparse
@@ -19,57 +21,6 @@ from ml.serving.model_io import write_predictor_to_disk
 from utils.utils import get_logger, fancy_print, read_config
 
 logger = get_logger(__name__)
-
-
-def get_experiment_specific_params():
-    """Place holder function that will call into gradient-app
-    and get specific training configs. TODO: fill this in with a request."""
-
-    return {
-        "experiment_id": "test-experiment-height-prediction-v2",
-        "decisions_ds_start": "2020-03-16",
-        "decisions_ds_end": "2020-03-18",
-        "rewards_ds_end": "2020-03-19",
-        "features": {
-            "country": {
-                "type": "P",
-                "possible_values": None,
-                "product_set_id": "1",
-                "use_dense": False,
-            },
-            "year": {"type": "N", "possible_values": None, "product_set_id": None},
-            "decision": {
-                "type": "P",
-                "possible_values": [1, 2],
-                "product_set_id": "2",
-                "use_dense": False,
-            },
-        },
-        "reward_function": {"height": 1},
-        "product_sets": {
-            "1": {
-                "ids": [1, 2, 3, 4, 5],
-                "dense": {
-                    1: [0, 10.0],
-                    2: [1, 8.5],
-                    3: [1, 7.5],
-                    4: [2, 11.5],
-                    5: [2, 10.5],
-                },
-                "features": [
-                    {"name": "region", "type": "C", "possible_values": [0, 1, 2]},
-                    {"name": "avg_shoe_size_m", "type": "N", "possible_values": None},
-                ],
-            },
-            "2": {
-                "ids": [1, 2],
-                "dense": {1: [1], 2: [2]},
-                "features": [
-                    {"name": "gender", "type": "C", "possible_values": [1, 2]}
-                ],
-            },
-        },
-    }
 
 
 def build_pytorch_net(
@@ -115,10 +66,9 @@ def fit_custom_pytorch_module_w_skorch(module, X, y, hyperparams):
     return skorch_net
 
 
-def train(shared_params: Dict, model_path: str = None):
-    logger.info("Getting experiment config from banditml.com...")
-    experiment_specific_params = get_experiment_specific_params()
-    logger.info(f"Got experiment specific params: {experiment_specific_params}")
+def train(
+    shared_params: Dict, experiment_specific_params: Dict, model_path: str = None
+):
 
     logger.info("Initializing data reader...")
     data_reader = BigQueryReader(
@@ -170,8 +120,16 @@ def main(args):
     start = time.time()
     fancy_print("Starting workflow", color="green", size=70)
     wf_params = read_config(args.params_path)
+
+    if args.experiment_config_path:
+        experiment_specific_params = read_config(args.experiment_config_path)
+    else:
+        logger.info("Getting experiment config from banditml.com...")
+        # TODO: read from banditml.com
+        pass
+
     logger.info("Using parameters: {}".format(wf_params))
-    train(wf_params, args.model_path)
+    train(wf_params, experiment_specific_params, args.model_path)
     logger.info("Workflow completed successfully.")
     logger.info(f"Took {time.time() - start} seconds to complete.")
 
@@ -179,6 +137,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--params_path", required=True, type=str)
+    parser.add_argument("--experiment_config_path", required=False, type=str)
     parser.add_argument("--model_path", required=False, type=str)
     args = parser.parse_args()
     main(args)
