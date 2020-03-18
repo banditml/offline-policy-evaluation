@@ -3,7 +3,8 @@ Example script showing how to use a saved model object
 to make one off predictions.
 
 Usage:
-    python -m workflows.predict --model_path trained_models/test.pkl
+    python -m workflows.predict \
+    	--model_path trained_models/model.pkl
 """
 
 import argparse

@@ -64,7 +64,7 @@ class BanditPredictor:
             if meta["use_dense"] is True and "dense" in product_set_meta:
                 # if dense is true then convert ID's into their dense features
                 dense = np.array(
-                    [product_set_meta["dense"][i] for i in df[feature_name].values]
+                    [product_set_meta["dense"][str(i)] for i in df[feature_name].values]
                 )
                 for idx, feature in enumerate(product_set_meta["features"]):
                     vals = dense[:, idx]
