@@ -115,7 +115,7 @@ class EmbedDnn(nn.Module):
 
             # concatenate the float tensor and embedded tensor
             X_float = torch.cat((X_float, avg_embeddings), dim=1)
-            id_feature_col_idx += 1
+            id_feature_col_idx += 2
 
         x = X_float
         for i, activation in enumerate(self.activations):

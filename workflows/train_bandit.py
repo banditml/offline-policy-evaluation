@@ -26,22 +26,23 @@ def get_experiment_specific_params():
     and get specific training configs. TODO: fill this in with a request."""
 
     return {
-        "experiment_id": "test-experiment-height-prediction",
-        "decisions_ds_start": "2020-03-09",
-        "decisions_ds_end": "2020-03-12",
-        "rewards_ds_end": "2020-03-13",
+        "experiment_id": "test-experiment-height-prediction-v2",
+        "decisions_ds_start": "2020-03-16",
+        "decisions_ds_end": "2020-03-18",
+        "rewards_ds_end": "2020-03-19",
         "features": {
             "country": {
                 "type": "P",
                 "possible_values": None,
                 "product_set_id": "1",
-                "use_dense": True,
+                "use_dense": False,
             },
             "year": {"type": "N", "possible_values": None, "product_set_id": None},
             "decision": {
-                "type": "C",
-                "possible_values": [0, 1],
-                "product_set_id": None,
+                "type": "P",
+                "possible_values": [1, 2],
+                "product_set_id": "2",
+                "use_dense": False,
             },
         },
         "reward_function": {"height": 1},
@@ -59,7 +60,14 @@ def get_experiment_specific_params():
                     {"name": "region", "type": "C", "possible_values": [0, 1, 2]},
                     {"name": "avg_shoe_size_m", "type": "N", "possible_values": None},
                 ],
-            }
+            },
+            "2": {
+                "ids": [1, 2],
+                "dense": {1: [1], 2: [2]},
+                "features": [
+                    {"name": "gender", "type": "C", "possible_values": [1, 2]}
+                ],
+            },
         },
     }
 

@@ -23,7 +23,7 @@ DECISION_TABLE_NAME = "gradient_app_staging.decisions"
 REWARDS_TABLE_NAME = "gradient_app_staging.rewards"
 CREDS_PATH = "credentials/bq_creds.json"
 
-EXPERIMENT_ID = "test-experiment-height-prediction"
+EXPERIMENT_ID = "test-experiment-height-prediction-v2"
 CURRENT_HEIGHT_DISTRIBUTIONS = {
     "usa": {
         "id": 1,
@@ -51,7 +51,7 @@ CURRENT_HEIGHT_DISTRIBUTIONS = {
         "female": {"mean": 167.1, "stddev": 4},
     },
 }
-GENDER_MAP = {"male": 0, "female": 1}
+GENDER_MAP = {"male": 1, "female": 2}
 CURRENT_YEAR = 2020
 YEARLY_MEAN_CM_ADJUSTMENTS = 0.25
 POSSIBLE_YEARS = range(CURRENT_YEAR - 50, CURRENT_YEAR + 1)

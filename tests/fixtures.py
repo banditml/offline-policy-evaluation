@@ -20,7 +20,7 @@ class Params:
             "year": {"type": "N", "possible_values": None, "product_set_id": None},
             "decision": {
                 "type": "C",
-                "possible_values": [0, 1],
+                "possible_values": [1, 2],
                 "product_set_id": None,
             },
         },
@@ -61,6 +61,21 @@ class Params:
         "use_dense": True,
     }
     EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST = _tmp_1
+
+    # experiment params for country as ID list AND decision as ID list variables
+    _tmp_2 = deepcopy(EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST)
+    _tmp_2["features"]["decision"] = {
+        "type": "P",
+        "possible_values": [1, 2],
+        "product_set_id": "2",
+        "use_dense": False,
+    }
+    _tmp_2["product_sets"]["2"] = {
+        "ids": [1, 2],
+        "dense": {1: [1], 2: [2]},
+        "features": [{"name": "gender", "type": "C", "possible_values": [1, 2]}],
+    }
+    EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST = _tmp_2
 
     # shared model params
     SHARED_PARAMS = {
@@ -127,5 +142,25 @@ class Datasets:
         "X_train": {"X_float": _X["X_float"][:_offset]},
         "y_train": _y[:_offset],
         "X_test": {"X_float": _X["X_float"][_offset:]},
+        "y_test": _y[_offset:],
+    }
+
+    # dataset for country as ID list AND decision as ID list variables
+    DATA_COUNTRY_AND_DECISION_ID_LIST = preprocessor.preprocess_data(
+        _raw_data, Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST
+    )
+    _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_AND_DECISION_ID_LIST)
+    X_COUNTRY_AND_DECISION_ID_LIST = {
+        "X_train": {
+            "X_float": _X["X_float"][:_offset],
+            "X_id_list": _X["X_id_list"][:_offset],
+            "X_id_list_idxs": _X["X_id_list_idxs"][:_offset],
+        },
+        "y_train": _y[:_offset],
+        "X_test": {
+            "X_float": _X["X_float"][_offset:],
+            "X_id_list": _X["X_id_list"][_offset:],
+            "X_id_list_idxs": _X["X_id_list_idxs"][_offset:],
+        },
         "y_test": _y[_offset:],
     }
