@@ -39,6 +39,7 @@ All models can handle <b>4</b> types of features:
 ## Docs
 
 If you just want to train a model for free and do everything else yourself these are the docs for you:
+
 [Do it yourself quick start](DOCS.md)
 
 Alternatively, the  [hosted solution](https://www.banditml.com)  offers an end-to-end service for integrating contextual bandit and reinforcement learning algorithms into your application. Specifically, the end-to-end service offers:
