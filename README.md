@@ -12,7 +12,7 @@
 
 [Bandit ML](https://www.banditml.com) is a lightweight decision making & personalization framework built by experts from Facebook's applied reinforcement learning team, [Reagent](https://github.com/facebookresearch/ReAgent). Bandit ML gives users access to state of the art contextual bandit and reinforcement learning algorithms through a simple javascript widget.
 
-This repo holds the open source machine learning code that powers banditml.com. Specifically, this repo contains:
+This repo holds the open source machine learning code that powers [banditml.com](https://www.banditml.com). Specifically, this repo contains:
 - Feature engineering & preprocessing
 - Model implementations
 - Model training workflows
@@ -27,14 +27,14 @@ Models supported:
 
 All models can handle <b>4</b> types of features:
 * <b>Numeric:</b> (standard floating point features)
-* e.g. `[12.5, 1.3, ...]`
+  * e.g. `[12.5, 1.3, ...]`
 * <b>Categorical:</b> (low-cardinality discrete features)
-* e.g. `['t-shirt', 'jeans', ...]`
+  * e.g. `['t-shirt', 'jeans', ...]`
 * <b>ID list:</b> (high-cardinality discrete features)
-* e.g. `['productId1', ..., 'productId1001']`
+  * e.g. `['productId1', ..., 'productId1001']`
 * Handled via. learned embedding tables
-* <b>"Dense" ID list:</b> (high-cardinality discrete features, manually mapped to dense feature vectors)
-* e.g `[productId1': [0.5, 1.3..], ..., 'productId1001': [1.9, 0.1..]]`)
+  * <b>"Dense" ID list:</b> (high-cardinality discrete features, manually mapped to dense feature vectors)
+  * e.g `[productId1': [0.5, 1.3..], ..., 'productId1001': [1.9, 0.1..]]`)
 
 ## Docs
 
