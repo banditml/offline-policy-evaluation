@@ -66,7 +66,7 @@ python -m workflows.predict \
 	--model_path trained_models/model.pkl
 ```
 
-To make model portability easier, you can use the banditml pip package to
+To make model portability easier, you can use the [banditml pip package](https://pypi.org/project/banditml/) to
 serve your model in a Python service like this:
 
 ```
