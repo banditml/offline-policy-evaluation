@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from ml.preprocessing import preprocessor
+from ..preprocessing import preprocessor
 
 
 class BanditPredictor:

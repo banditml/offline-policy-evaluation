@@ -1,7 +1,7 @@
 import unittest
 
 
-from ml.models import benchmarks
+from banditml_pkg.banditml.models import benchmarks
 from tests.fixtures import Params, Datasets
 from workflows import train_bandit
 

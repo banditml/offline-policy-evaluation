@@ -66,6 +66,24 @@ python -m workflows.predict \
 	--model_path trained_models/model.pkl
 ```
 
+To make model portability easier, you can use the banditml pip package to
+serve your model in a Python service like this:
+
+```
+import sys
+
+import banditml
+from banditml import model_io
+
+sys.modules["banditml_pkg"] = banditml
+sys.modules["banditml_pkg.banditml"] = banditml
+
+path = "/some/model/path/model.pkl"
+
+predictor = model_io.read_predictor_from_disk(path)
+print(predictor.predict({"country": 5, "year": 1990}))
+```
+
 ## Running tests
 
 To run all unit tests:
@@ -75,5 +93,5 @@ python -m unittest
 
 To run unit tests for one module:
 ```
-python -m unittest tests.ml.serving.test_predictor
+python -m unittest tests.banditml_pkg.banditml.serving.test_predictor
 ```

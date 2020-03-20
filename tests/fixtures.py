@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from ml.preprocessing import preprocessor
+from banditml_pkg.banditml.preprocessing import preprocessor
 
 
 class Params:
@@ -29,11 +29,11 @@ class Params:
             "1": {
                 "ids": [1, 2, 3, 4, 5],
                 "dense": {
-                    1: [0, 10.0],
-                    2: [1, 8.5],
-                    3: [1, 7.5],
-                    4: [2, 11.5],
-                    5: [2, 10.5],
+                    "1": [0, 10.0],
+                    "2": [1, 8.5],
+                    "3": [1, 7.5],
+                    "4": [2, 11.5],
+                    "5": [2, 10.5],
                 },
                 "features": [
                     {"name": "region", "type": "C", "possible_values": [0, 1, 2]},
