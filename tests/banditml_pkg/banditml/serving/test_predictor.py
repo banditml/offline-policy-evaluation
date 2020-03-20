@@ -5,9 +5,9 @@ import unittest
 
 import numpy as np
 
-from ml.preprocessing import preprocessor
-from ml.serving import model_io
-from ml.serving.predictor import BanditPredictor
+from banditml_pkg.banditml import model_io
+from banditml_pkg.banditml.preprocessing import preprocessor
+from banditml_pkg.banditml.serving.predictor import BanditPredictor
 from sklearn.utils import shuffle
 from tests.fixtures import Params, Datasets
 from workflows import train_bandit

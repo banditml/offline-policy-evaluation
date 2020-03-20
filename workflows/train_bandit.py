@@ -14,10 +14,10 @@ from skorch import NeuralNetRegressor
 import torch
 
 from data_reader.bandit_reader import BigQueryReader
-from ml.preprocessing import preprocessor
-from ml.models.embed_dnn import EmbedDnn
-from ml.serving.predictor import BanditPredictor
-from ml.serving.model_io import write_predictor_to_disk
+from banditml_pkg.banditml.preprocessing import preprocessor
+from banditml_pkg.banditml.models.embed_dnn import EmbedDnn
+from banditml_pkg.banditml.serving.predictor import BanditPredictor
+from banditml_pkg.banditml.model_io import write_predictor_to_disk
 from utils.utils import get_logger, fancy_print, read_config
 
 logger = get_logger(__name__)

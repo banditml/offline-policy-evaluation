@@ -14,7 +14,7 @@ import time
 
 import pandas as pd
 
-from ml.serving.model_io import read_predictor_from_disk
+from banditml_pkg.banditml.model_io import read_predictor_from_disk
 from utils.utils import get_logger
 
 
