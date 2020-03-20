@@ -3,7 +3,9 @@ Usage:
     python -m workflows.train_bandit \
         --params_path configs/bandit.json \
         --experiment_config_path configs/example_experiment_config.json \
-        --model_path trained_models/model.pkl
+        --model_path trained_models/test_model.pkl \
+        --s3_bucket_to_write_to banditml-models
+
 """
 
 import argparse
@@ -13,11 +15,12 @@ from typing import Dict, List, NoReturn, Tuple
 from skorch import NeuralNetRegressor
 import torch
 
+import boto3
 from data_reader.bandit_reader import BigQueryReader
 from banditml_pkg.banditml.preprocessing import preprocessor
 from banditml_pkg.banditml.models.embed_dnn import EmbedDnn
 from banditml_pkg.banditml.serving.predictor import BanditPredictor
-from banditml_pkg.banditml.model_io import write_predictor_to_disk
+from banditml_pkg.banditml import model_io
 from utils.utils import get_logger, fancy_print, read_config
 
 logger = get_logger(__name__)
@@ -67,7 +70,10 @@ def fit_custom_pytorch_module_w_skorch(module, X, y, hyperparams):
 
 
 def train(
-    shared_params: Dict, experiment_specific_params: Dict, model_path: str = None
+    shared_params: Dict,
+    experiment_specific_params: Dict,
+    model_path: str = None,
+    s3_bucket_to_write_to: str = None,
 ):
 
     logger.info("Initializing data reader...")
@@ -113,7 +119,18 @@ def train(
             net=skorch_net,
         )
 
-        write_predictor_to_disk(predictor, path=model_path)
+        model_io.write_predictor_to_disk(predictor, model_path)
+
+        if s3_bucket_to_write_to is not None:
+            # Assumes aws credentials stored in ~/.aws/credentials that looks like:
+            # [default]
+            # aws_access_key_id = YOUR_ACCESS_KEY
+            # aws_secret_access_key = YOUR_SECRET_KEY
+            s3_client = boto3.client("s3")
+            file_name = model_path.split("/")[-1]
+            s3_client.upload_file(
+                model_path, Bucket=s3_bucket_to_write_to, Key=file_name
+            )
 
 
 def main(args):
@@ -129,7 +146,12 @@ def main(args):
         pass
 
     logger.info("Using parameters: {}".format(wf_params))
-    train(wf_params, experiment_specific_params, args.model_path)
+    train(
+        wf_params,
+        experiment_specific_params,
+        args.model_path,
+        args.s3_bucket_to_write_to,
+    )
     logger.info("Workflow completed successfully.")
     logger.info(f"Took {time.time() - start} seconds to complete.")
 
@@ -139,5 +161,6 @@ if __name__ == "__main__":
     parser.add_argument("--params_path", required=True, type=str)
     parser.add_argument("--experiment_config_path", required=False, type=str)
     parser.add_argument("--model_path", required=False, type=str)
+    parser.add_argument("--s3_bucket_to_write_to", required=False, type=str)
     args = parser.parse_args()
     main(args)
