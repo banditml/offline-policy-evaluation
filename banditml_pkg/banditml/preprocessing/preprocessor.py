@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+from sklearn.impute import SimpleImputer
 from sklearn.utils import shuffle
 import torch
 from torch.nn.utils.rnn import pad_sequence
@@ -50,10 +51,14 @@ def preprocess_feature(
         # standard scaler seems to be right choice for numeric features
         # in regression problems
         # http://rajeshmahajan.com/standard-scaler-v-min-max-scaler-machine-learning/
+        imputer = SimpleImputer(strategy="mean")
+        values = imputer.fit_transform(values)
         preprocessor = preprocessing.StandardScaler()
         values = preprocessor.fit_transform(values)
         df = pd.DataFrame(values.squeeze(), columns=[feature_name])
     elif feature_type == "C":
+        imputer = SimpleImputer(strategy="most_frequent")
+        values = imputer.fit_transform(values)
         preprocessor = preprocessing.OneHotEncoder(sparse=False)
         values = preprocessor.fit_transform(values)
         preprocessor.col_names = [
@@ -63,7 +68,7 @@ def preprocess_feature(
     else:
         raise Exception(f"Feature type {feature_type} not supported.")
 
-    return df, preprocessor
+    return df, preprocessor, imputer
 
 
 def preprocess_data(
@@ -74,24 +79,22 @@ def preprocess_data(
     if shuffle_data:
         raw_data = shuffle(raw_data)
 
-    # load the json string into json objects and expand into columns &
-    # fill metrics NaN's with 0's.
+    # if context or decision is missing, this row is unsalvageble so drop it
+    raw_data = raw_data.dropna(subset=["context", "decision"])
+
+    # load the json string into json objects and expand into columns
     X = pd.json_normalize(raw_data["context"].apply(json.loads))
     X["decision"] = raw_data["decision"].values
 
-    y = pd.json_normalize(
-        raw_data["metrics"].apply(lambda x: json.loads(x) if x else {})
-    )
+    # fill in missing (NaN) rewards with empty metric maps
+    raw_data["metrics"] = raw_data["metrics"].fillna("{}")
+    y = pd.json_normalize(raw_data["metrics"].apply(lambda x: json.loads(x)))
     y = y.fillna(0)
 
     # construct the reward scalar using a linear combination
     X["reward"] = pd.Series(0, index=range(len(y)))
     for metrics_name, series in y.iteritems():
         X["reward"] += series * params["reward_function"][metrics_name]
-
-    # drop NaN value rows for now TODO: think about if imputing these rows
-    # may be better than just dropping them.
-    X.dropna(inplace=True)
 
     reward_df = X["reward"]
     float_feature_df = pd.DataFrame()
@@ -104,15 +107,16 @@ def preprocess_data(
     # final features names after preprocessing & expansion of categoricals
     final_float_feature_order, final_id_feature_order = [], []
 
-    transforms = {}
+    transforms, imputers = {}, {}
     for feature_name in float_feature_order:
         meta = params["features"][feature_name]
-        df, preprocessor = preprocess_feature(
+        df, preprocessor, imputer = preprocess_feature(
             feature_name, meta["type"], X[feature_name].values
         )
         final_float_feature_order.extend(df.columns)
         float_feature_df = pd.concat([float_feature_df, df], axis=1)
         transforms[feature_name] = preprocessor
+        imputers[feature_name] = imputer
 
     for feature_name in id_feature_order:
         meta = params["features"][feature_name]
@@ -122,16 +126,17 @@ def preprocess_data(
         if meta["use_dense"] is True and "dense" in product_set_meta:
             # if dense is true then convert ID's into their dense features
             dense = np.array(
-                [product_set_meta["dense"][str(i)] for i in X[feature_name].values]
+                [product_set_meta["dense"][str(int(i))] for i in X[feature_name].values]
             )
             for idx, feature in enumerate(product_set_meta["features"]):
                 vals = dense[:, idx]
-                df, preprocessor = preprocess_feature(
+                df, preprocessor, imputer = preprocess_feature(
                     feature["name"], feature["type"], vals
                 )
                 final_float_feature_order.extend(df.columns)
                 float_feature_df = pd.concat([float_feature_df, df], axis=1)
                 transforms[feature["name"]] = preprocessor
+                imputers[feature["name"]] = imputer
         else:
             # sparse id list features aren't preprocessed, instead they use an
             # embedding table which is built into the pytorch model
@@ -140,12 +145,14 @@ def preprocess_data(
             transforms[feature_name] = params["features"][feature_name][
                 "product_set_id"
             ]
+            imputers[feature_name] = params["features"][feature_name]["product_set_id"]
 
     return {
         "y": reward_df,
         "X_float": float_feature_df,
         "X_id_list": id_list_feature_df,
         "transforms": transforms,
+        "imputers": imputers,
         "float_feature_order": float_feature_order,
         "id_feature_order": id_feature_order,
         "final_float_feature_order": final_float_feature_order,

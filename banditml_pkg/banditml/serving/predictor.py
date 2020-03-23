@@ -16,16 +16,20 @@ class BanditPredictor:
         float_feature_order,
         id_feature_order,
         transforms,
+        imputers,
         net,
     ):
         self.experiment_specific_params = experiment_specific_params
         self.float_feature_order = float_feature_order
         self.id_feature_order = id_feature_order
         self.transforms = transforms
+        self.imputers = imputers
         self.net = net
 
-    def transform_feature(self, vals, transformer=None):
+    def transform_feature(self, vals, transformer=None, imputer=None):
         vals = vals.reshape(-1, 1)
+        if imputer:
+            vals = imputer.transform(vals)
         if transformer:
             vals = transformer.transform(vals)
 
@@ -51,7 +55,9 @@ class BanditPredictor:
 
         for feature_name in self.float_feature_order:
             values = self.transform_feature(
-                df[feature_name].values, self.transforms[feature_name]
+                df[feature_name].values,
+                self.transforms[feature_name],
+                self.imputers[feature_name],
             )
             float_feature_array = np.append(float_feature_array, values, axis=1)
 
@@ -69,7 +75,9 @@ class BanditPredictor:
                 for idx, feature in enumerate(product_set_meta["features"]):
                     vals = dense[:, idx]
                     values = self.transform_feature(
-                        vals, self.transforms[feature["name"]]
+                        vals,
+                        self.transforms[feature["name"]],
+                        self.imputers[feature["name"]],
                     )
                     float_feature_array = np.append(float_feature_array, values, axis=1)
             else:
