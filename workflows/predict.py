@@ -4,7 +4,7 @@ to make one off predictions.
 
 Usage:
     python -m workflows.predict \
-    	--model_path trained_models/model.pkl
+    	--model_path trained_models/test_model.pkl
 """
 
 import argparse

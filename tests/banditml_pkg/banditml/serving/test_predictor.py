@@ -76,6 +76,7 @@ class TestPredictor(unittest.TestCase):
             float_feature_order=Datasets.DATA_COUNTRY_CATEG["float_feature_order"],
             id_feature_order=Datasets.DATA_COUNTRY_CATEG["id_feature_order"],
             transforms=Datasets.DATA_COUNTRY_CATEG["transforms"],
+            imputers=Datasets.DATA_COUNTRY_CATEG["imputers"],
             net=skorch_net,
         )
 
@@ -142,6 +143,7 @@ class TestPredictor(unittest.TestCase):
             float_feature_order=Datasets.DATA_COUNTRY_ID_LIST["float_feature_order"],
             id_feature_order=Datasets.DATA_COUNTRY_ID_LIST["id_feature_order"],
             transforms=Datasets.DATA_COUNTRY_ID_LIST["transforms"],
+            imputers=Datasets.DATA_COUNTRY_ID_LIST["imputers"],
             net=skorch_net,
         )
 
@@ -204,6 +206,7 @@ class TestPredictor(unittest.TestCase):
             ],
             id_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST["id_feature_order"],
             transforms=Datasets.DATA_COUNTRY_DENSE_ID_LIST["transforms"],
+            imputers=Datasets.DATA_COUNTRY_DENSE_ID_LIST["imputers"],
             net=skorch_net,
         )
 
@@ -278,6 +281,7 @@ class TestPredictor(unittest.TestCase):
                 "id_feature_order"
             ],
             transforms=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["transforms"],
+            imputers=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["imputers"],
             net=skorch_net,
         )
 

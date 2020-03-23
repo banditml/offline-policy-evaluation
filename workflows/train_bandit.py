@@ -116,6 +116,7 @@ def train(
             float_feature_order=data["float_feature_order"],
             id_feature_order=data["id_feature_order"],
             transforms=data["transforms"],
+            imputers=data["imputers"],
             net=skorch_net,
         )
 
