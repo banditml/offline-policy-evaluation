@@ -8,6 +8,8 @@
 </p>
 </p>
 
+[![PyPI version](https://badge.fury.io/py/banditml.svg)](https://badge.fury.io/py/banditml)
+
 # What's Bandit ML?
 
 [Bandit ML](https://www.banditml.com) is a lightweight decision making & personalization framework built by experts from Facebook's applied reinforcement learning team, [Reagent](https://github.com/facebookresearch/ReAgent). Bandit ML gives users access to state of the art contextual bandit and reinforcement learning algorithms through a simple javascript widget.
