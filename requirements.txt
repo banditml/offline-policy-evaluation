@@ -38,7 +38,6 @@ s3transfer==0.3.3
 scikit-learn==0.22.2.post1
 scipy==1.4.1
 six==1.14.0
-sklearn==0.0
 skorch==0.7.0
 soupsieve==2.0
 tabulate==0.8.6
