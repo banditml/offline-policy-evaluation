@@ -5,7 +5,6 @@ Usage:
         --experiment_config_path configs/example_experiment_config.json \
         --model_path trained_models/test_model.pkl \
         --s3_bucket_to_write_to banditml-models
-
 """
 
 import argparse
@@ -21,7 +20,12 @@ from banditml_pkg.banditml.preprocessing import preprocessor
 from banditml_pkg.banditml.models.embed_dnn import EmbedDnn
 from banditml_pkg.banditml.serving.predictor import BanditPredictor
 from banditml_pkg.banditml import model_io
-from utils.utils import get_logger, fancy_print, read_config
+from utils.utils import (
+    get_logger,
+    fancy_print,
+    read_config,
+    get_experiment_config_from_bandit_app,
+)
 
 logger = get_logger(__name__)
 
@@ -142,9 +146,14 @@ def main(args):
     if args.experiment_config_path:
         experiment_specific_params = read_config(args.experiment_config_path)
     else:
+        assert args.experiment_id is not None, (
+            "If no --experiment_config_path provided, --experiment_id must"
+            " be provided to fetch experiment config from bandit app."
+        )
         logger.info("Getting experiment config from banditml.com...")
-        # TODO: read from banditml.com
-        pass
+        experiment_specific_params = get_experiment_config_from_bandit_app(
+            args.experiment_id
+        )
 
     logger.info("Using parameters: {}".format(wf_params))
     train(
@@ -161,6 +170,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--params_path", required=True, type=str)
     parser.add_argument("--experiment_config_path", required=False, type=str)
+    parser.add_argument("--experiment_id", required=False, type=str)
     parser.add_argument("--model_path", required=False, type=str)
     parser.add_argument("--s3_bucket_to_write_to", required=False, type=str)
     args = parser.parse_args()
