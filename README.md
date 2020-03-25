@@ -8,7 +8,8 @@
 </p>
 </p>
 
-[![PyPI version](https://badge.fury.io/py/banditml.svg)](https://badge.fury.io/py/banditml)
+[![PyPI version](https://badge.fury.io/py/banditml.svg)](https://badge.fury.io/py/banditml) [![](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
 
 # What's Bandit ML?
 
