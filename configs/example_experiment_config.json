@@ -3,43 +3,41 @@
   "decisions_ds_start": "2020-03-16",
   "decisions_ds_end": "2020-03-18",
   "rewards_ds_end": "2020-03-19",
+  "reward_function": {"height": 1},
   "features": {
     "country": {
         "type": "P",
         "possible_values": null,
         "product_set_id": "1",
-        "use_dense": true
+        "use_dense": true,
     },
-    "year": {"type": "N", "possible_values": null, "product_set_id": null},
+    "year": {"type": "N"},
     "decision": {
-        "type": "P",
+        "type": "C",
         "possible_values": [1, 2],
-        "product_set_id": "2",
-        "use_dense": true
     }
   },
-  "reward_function": {"height": 1},
-    "product_sets": {
-        "1": {
-            "ids": [1, 2, 3, 4, 5],
-            "dense": {
-                "1": [0, 10.0],
-                "2": [1, 8.5],
-                "3": [1, 7.5],
-                "4": [2, 11.5],
-                "5": [2, 10.5]
-            },
-            "features": [
-                {"name": "region", "type": "C", "possible_values": [0, 1, 2]},
-                {"name": "avg_shoe_size_m", "type": "N", "possible_values": null}
-            ]
-        },
-        "2": {
-            "ids": [1, 2],
-            "dense": {"1": [1], "2": [2]},
-            "features": [
-                {"name": "gender", "type": "C", "possible_values": [1, 2]}
-            ]
-        }
-    }
+  "product_sets": {
+      "1": {
+          "ids": [1, 2, 3, 4, 5],
+          "dense": {
+              "1": [0, 10.0],
+              "2": [1, 8.5],
+              "3": [1, 7.5],
+              "4": [2, 11.5],
+              "5": [2, 10.5]
+          },
+          "features": [
+              {"name": "region", "type": "C", "possible_values": [0, 1, 2]},
+              {"name": "avg_shoe_size_m", "type": "N", "possible_values": null}
+          ]
+      },
+      "2": {
+          "ids": [1, 2],
+          "dense": {"1": [1], "2": [2]},
+          "features": [
+              {"name": "gender", "type": "C", "possible_values": [1, 2]}
+          ]
+      }
+  }
 }
