@@ -1,5 +1,5 @@
 {
-  "experiment_id": "test-experiment-height-prediction-v2",
+  "experiment_id": "test-experiment-height-prediction-v3",
   "decisions_ds_start": "2020-03-16",
   "decisions_ds_end": "2020-03-18",
   "rewards_ds_end": "2020-03-19",
