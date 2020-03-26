@@ -8,6 +8,7 @@ Usage:
 """
 
 import argparse
+import json
 import time
 from typing import Dict, List, NoReturn, Tuple
 
@@ -154,6 +155,11 @@ def main(args):
         experiment_specific_params = get_experiment_config_from_bandit_app(
             args.experiment_id
         )
+        # in transit this gets dumped as a string so load it
+        experiment_specific_params["reward_function"] = json.loads(
+            experiment_specific_params["reward_function"]
+        )
+        experiment_specific_params["experiment_id"] = args.experiment_id
 
     logger.info("Using parameters: {}".format(wf_params))
     train(
