@@ -40,10 +40,12 @@ class BigQueryReader:
         with r as (
             select
                 decision_id,
-                metrics
+                metrics,
+                experiment_id
             from `gradient-decision.gradient_app_staging.rewards`
             where DATE(_PARTITIONTIME)
                 between "{self.decisions_ds_start}" and "{self.rewards_ds_end}"
+                and experiment_id = "{self.experiment_id}"
         )
         select
           d.context,
@@ -52,6 +54,7 @@ class BigQueryReader:
         from `{self.decisions_table_name}` d
             left join r
             on r.decision_id = d.decision_id
+            and r.experiment_id = d.experiment_id
         where date(d._PARTITIONTIME)
             between "{self.decisions_ds_start}" and "{self.decisions_ds_end}"
             and experiment_id = "{self.experiment_id}"

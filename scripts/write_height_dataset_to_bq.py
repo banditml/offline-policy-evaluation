@@ -23,7 +23,7 @@ DECISION_TABLE_NAME = "gradient_app_staging.decisions"
 REWARDS_TABLE_NAME = "gradient_app_staging.rewards"
 CREDS_PATH = "credentials/bq_creds.json"
 
-EXPERIMENT_ID = "test-experiment-height-prediction-v2"
+EXPERIMENT_ID = "test-experiment-height-prediction-v3"
 CURRENT_HEIGHT_DISTRIBUTIONS = {
     "usa": {
         "id": 1,
@@ -102,7 +102,11 @@ def main():
         )
 
         rewards_to_insert.append(
-            {"decision_id": decision_id, "metrics": json.dumps({"height": height})}
+            {
+                "decision_id": decision_id,
+                "metrics": json.dumps({"height": height}),
+                "experiment_id": EXPERIMENT_ID,
+            }
         )
 
     # insert decisions into BQ table
