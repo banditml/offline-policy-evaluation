@@ -60,7 +60,7 @@ class TestTrainBandit(unittest.TestCase):
         # make sure mse is better or close to out of the box GBDT & MLP
         # the GBDT doesn't need as much training so make tolerance more forgiving
         assert test_mse < self.results_gbdt["mse_test"] * 1.1
-        assert test_mse < self.results_mlp["mse_test"] * 1.05
+        assert test_mse < self.results_mlp["mse_test"] * 1.08
 
     def test_pytorch_model_country_as_id_list(self):
         pytorch_net = train_bandit.build_pytorch_net(
@@ -91,7 +91,7 @@ class TestTrainBandit(unittest.TestCase):
         # make sure mse is better or close to out of the box GBDT & MLP
         # the GBDT doesn't need as much training so make tolerance more forgiving
         assert test_mse < self.results_gbdt["mse_test"] * 1.1
-        assert test_mse < self.results_mlp["mse_test"] * 1.05
+        assert test_mse < self.results_mlp["mse_test"] * 1.08
 
     def test_pytorch_model_country_as_dense_id_list(self):
         pytorch_net = train_bandit.build_pytorch_net(
@@ -124,7 +124,7 @@ class TestTrainBandit(unittest.TestCase):
         # make sure mse is better or close to out of the box GBDT & MLP
         # the GBDT doesn't need as much training so make tolerance more forgiving
         assert test_mse < self.results_gbdt["mse_test"] * 1.1
-        assert test_mse < self.results_mlp["mse_test"] * 1.05
+        assert test_mse < self.results_mlp["mse_test"] * 1.08
 
     def test_pytorch_model_country_as_id_list_and_decision_as_id_list(self):
         pytorch_net = train_bandit.build_pytorch_net(

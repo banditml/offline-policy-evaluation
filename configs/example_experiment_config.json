@@ -9,12 +9,12 @@
         "type": "P",
         "possible_values": null,
         "product_set_id": "1",
-        "use_dense": true,
+        "use_dense": true
     },
     "year": {"type": "N"},
     "decision": {
         "type": "C",
-        "possible_values": [1, 2],
+        "possible_values": [1, 2]
     }
   },
   "product_sets": {
@@ -28,7 +28,7 @@
               "5": [2, 10.5]
           },
           "features": [
-              {"name": "region", "type": "C", "possible_values": [0, 1, 2]},
+              {"name": "region", "type": "C", "possible_values": [1, 2, 3]},
               {"name": "avg_shoe_size_m", "type": "N", "possible_values": null}
           ]
       },
