@@ -86,7 +86,9 @@ class TestPredictor(unittest.TestCase):
         pre_pred = skorch_net.predict(X_COUNTRY_CATEG["X_train"])[rand_idx]
         post_pred = post_pickle_predictor.predict(json.loads(test_input.context))
 
-        assert np.isclose(pre_pred, post_pred[test_input.decision - 1], self.tol)
+        assert np.isclose(
+            pre_pred, post_pred["scores"][test_input.decision - 1], self.tol
+        )
 
     def test_same_predictions_country_as_id_list(self):
         raw_data = shuffle(Datasets._raw_data)
@@ -153,7 +155,9 @@ class TestPredictor(unittest.TestCase):
         pre_pred = skorch_net.predict(X_COUNTRY_ID_LIST["X_train"])[rand_idx]
         post_pred = post_pickle_predictor.predict(json.loads(test_input.context))
 
-        assert np.isclose(pre_pred, post_pred[test_input.decision - 1], self.tol)
+        assert np.isclose(
+            pre_pred, post_pred["scores"][test_input.decision - 1], self.tol
+        )
 
     def test_same_predictions_country_as_dense_id_list(self):
         raw_data = shuffle(Datasets._raw_data)
@@ -216,7 +220,9 @@ class TestPredictor(unittest.TestCase):
         pre_pred = skorch_net.predict(X_COUNTRY_DENSE_ID_LIST["X_train"])[rand_idx]
         post_pred = post_pickle_predictor.predict(json.loads(test_input.context))
 
-        assert np.isclose(pre_pred, post_pred[test_input.decision - 1], self.tol)
+        assert np.isclose(
+            pre_pred, post_pred["scores"][test_input.decision - 1], self.tol
+        )
 
     def test_same_predictions_country_and_decision_as_id_list(self):
         raw_data = shuffle(Datasets._raw_data)
@@ -293,4 +299,6 @@ class TestPredictor(unittest.TestCase):
         ]
         post_pred = post_pickle_predictor.predict(json.loads(test_input.context))
 
-        assert np.isclose(pre_pred, post_pred[test_input.decision - 1], self.tol)
+        assert np.isclose(
+            pre_pred, post_pred["scores"][test_input.decision - 1], self.tol
+        )

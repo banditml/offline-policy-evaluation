@@ -57,7 +57,7 @@ class BigQueryReader:
             and r.experiment_id = d.experiment_id
         where date(d._PARTITIONTIME)
             between "{self.decisions_ds_start}" and "{self.decisions_ds_end}"
-            and experiment_id = "{self.experiment_id}"
+            and d.experiment_id = "{self.experiment_id}"
         """
 
     @retry(tries=3, delay=1, backoff=2, logger=logger)

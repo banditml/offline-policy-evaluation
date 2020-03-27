@@ -26,6 +26,9 @@ class BanditPredictor:
         self.imputers = imputers
         self.net = net
 
+        # the ordered decisions that we need to score over.
+        self.decisions = []
+
     def transform_feature(self, vals, transformer=None, imputer=None):
         vals = vals.reshape(-1, 1)
         if imputer:
@@ -49,6 +52,7 @@ class BanditPredictor:
             decisions = product_set["ids"]
             expanded_input = [dict(input, **{"decision": d}) for d in decisions]
 
+        self.decisions = decisions
         df = pd.DataFrame(expanded_input)
         float_feature_array = np.empty((len(df), 0))
         id_list_feature_array = np.empty((len(df), 0))
@@ -98,4 +102,5 @@ class BanditPredictor:
     def predict(self, input):
         input = self.preprocess_input(input)
         pytorch_input = self.preprocessed_input_to_pytorch(input)
-        return self.net.predict(pytorch_input)
+        scores = self.net.predict(pytorch_input)
+        return {"scores": scores.tolist(), "ids": self.decisions}
