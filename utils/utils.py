@@ -5,7 +5,7 @@ import math
 import requests
 
 BANDIT_APP_CREDS_PATH = "credentials/bandit_app_creds.json"
-BANDIT_APP_EXP_CONFIG_URL = "https://www.banditml.com/api/get_bandit_exp_config"
+BANDIT_APP_EXP_CONFIG_URL = "https://www.banditml.com/api/exp_config"
 
 
 def read_config(config_path):
@@ -46,7 +46,7 @@ def get_experiment_config_from_bandit_app(experiment_id):
         creds = json.load(json_file)
 
     api_key = creds["api_key"]
-    params = {"experiment_id": experiment_id}
+    params = {"experimentId": experiment_id}
     response = requests.get(
         url=BANDIT_APP_EXP_CONFIG_URL,
         params=params,
