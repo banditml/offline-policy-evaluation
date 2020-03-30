@@ -10,6 +10,7 @@ from collections import defaultdict
 import json
 import random
 import sys
+import time
 import uuid
 
 from google.cloud import bigquery
@@ -23,7 +24,7 @@ DECISION_TABLE_NAME = "gradient_app_staging.decisions"
 REWARDS_TABLE_NAME = "gradient_app_staging.rewards"
 CREDS_PATH = "credentials/bq_creds.json"
 
-EXPERIMENT_ID = "test-experiment-height-prediction-v3"
+EXPERIMENT_ID = "test-experiment-height-prediction-v8"
 CURRENT_HEIGHT_DISTRIBUTIONS = {
     "usa": {
         "id": 1,
@@ -67,7 +68,11 @@ def main():
     reward_table = client.get_table(REWARDS_TABLE_NAME)
 
     # create decisions to insert into table
-    decisions_to_insert, rewards_to_insert = [], []
+    decisions_to_insert, immediate_rewards_to_insert, end_of_mdp_rewards_to_insert = (
+        [],
+        [],
+        [],
+    )
     for i in range(NUM_GET_DECISION_CALLS):
 
         # pick random country, genderm & year
@@ -92,20 +97,58 @@ def main():
 
         decision_id = str(uuid.uuid4())
 
+        ######### decisions table schema #########
+        # decision_id    <STRING>       REQUIRED
+        # context        <JSON STRING>	REQUIRED
+        # decision	     <INTEGER>      REQUIRED
+        # experiment_id  <STRING>       NULLABLE
+        # variation_id   <INTEGER>      NULLABLE
+        # mdp_id         <STRING>       NULLABLE
+        # ts             <INTEGER>      NULLABLE
+
         decisions_to_insert.append(
             {
                 "decision_id": decision_id,
                 "context": json.dumps(context),
                 "decision": GENDER_MAP[gender],
                 "experiment_id": EXPERIMENT_ID,
+                "variation_id": random.randint(1, 2),
+                "mdp_id": str(i),
+                "ts": int(time.time()),
             }
         )
 
-        rewards_to_insert.append(
+        ######### rewards table schema #########
+        # decision_id    <STRING>       NULLABLE
+        # decision	     <INTEGER>      NULLABLE
+        # metrics        <JSON STRING>	NULLABLE
+        # experiment_id  <STRING>       NULLABLE
+        # mdp_id         <STRING>       NULLABLE
+        # ts             <INTEGER>      NULLABLE
+
+        # add some immediate rewards
+        immediate_rewards_to_insert.append(
             {
                 "decision_id": decision_id,
+                "decision": GENDER_MAP[gender],
                 "metrics": json.dumps({"height": height}),
                 "experiment_id": EXPERIMENT_ID,
+                "mdp_id": str(i),
+                "ts": int(time.time()),
+            }
+        )
+
+        # and add end of MDP rewards. in this problem all rewards are immediate
+        # so add these as 0's to test the joining logic in training. in practice
+        # end of MDP metrics' keys map to previous decisions
+        end_of_mdp_rewards_to_insert.append(
+            {
+                "decision_id": None,
+                "decision": None,
+                "metrics": json.dumps({1: 0}),
+                "experiment_id": EXPERIMENT_ID,
+                "mdp_id": str(i),
+                "ts": int(time.time()),
             }
         )
 
@@ -113,9 +156,17 @@ def main():
     client.insert_rows(decision_table, decisions_to_insert)
     print(f"Successfully inserted {NUM_GET_DECISION_CALLS} decisions.")
 
-    # insert rewards into BQ table
-    client.insert_rows(reward_table, rewards_to_insert)
-    print(f"Successfully inserted {len(rewards_to_insert)} rewards.")
+    # insert immediate rewards into BQ table
+    client.insert_rows(reward_table, immediate_rewards_to_insert)
+    print(
+        f"Successfully inserted {len(immediate_rewards_to_insert)} immediate rewards."
+    )
+
+    # insert end of MDP rewards into BQ table
+    client.insert_rows(reward_table, end_of_mdp_rewards_to_insert)
+    print(
+        f"Successfully inserted {len(end_of_mdp_rewards_to_insert)} end of MDP rewards."
+    )
 
 
 if __name__ == "__main__":
