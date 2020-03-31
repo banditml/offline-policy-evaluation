@@ -1,6 +1,6 @@
 # Do it yourself quick start
 
-This guide walks through training and serving a bandit model.
+This guide walks through training and serving bandit models.
 
 ## Installation
 Clone the repo & install the requirements:
