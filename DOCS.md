@@ -33,8 +33,8 @@ Sample records:
 ```
 
 `rewards` table:
-- <b>decision_id (STRING)</b>: The ID of the decision to join this reward to. Sometimes decisions are lists (e.g. ranking problems). In this case all items in the ranked list should be logged as seperate rows and have the same `decision_id` with a numeric `position` feature in `context` to de-bias the position effect in the decision.
-- <b>decision (INT)</b>: The decision this reward joins to. Rewards are joined using both `decision_id` and `decision` since `decision_id` is not always unique (when decisions are ranked lists of several items).
+- <b>decision_id (STRING)</b>: The ID of the decision to join this reward to. Sometimes decisions are lists (e.g. ranking problems). In this case all items in the ranked list should be logged as seperate rows and have the same `decision_id` with a numeric `position` feature in `context` to de-bias the position effect in the decision. For `delayed` rewards, `decision_id` is expected to be null. Bandit will assign the reward to the right decision automatically (see below).
+- <b>decision (INT)</b>: The decision this reward joins to. Rewards are joined using both `decision_id` and `decision` since `decision_id` is not always unique (when decisions are ranked lists of several items). For `delayed` rewards, `decision` is expected to be null.
 - <b>metrics (STRING)</b>: A JSON string holding a map of the reward metrics. Used to construct a reward. Map values are either `int` or `float` (no `str` values).
 - <b>experiment_id (STRING)</b>: See description in `decisions` table above.
 - <b>mdp_id (STRING)</b>: See description in `decisions` table above.
