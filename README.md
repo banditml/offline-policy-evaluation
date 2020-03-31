@@ -30,14 +30,14 @@ Models supported:
 - [ ] [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
 
 <b>4</b> feature types supported:
-* <b>Numeric:</b> (standard floating point features)
+* <b>Numeric:</b> standard floating point features
   * e.g. `{totalCartValue: 39.99}`
-* <b>Categorical:</b> (low-cardinality discrete features)
+* <b>Categorical:</b> low-cardinality discrete features
   * e.g. `{currentlyViewingCategory: "men's jeans"}`
-* <b>ID list:</b> (high-cardinality discrete features)
+* <b>ID list:</b> high-cardinality discrete features
   * e.g. `{productsInCart: ["productId022", "productId109"...]}`
   * Handled via. learned embedding tables
-* <b>"Dense" ID list:</b> (high-cardinality discrete features, manually mapped to dense feature vectors)
+* <b>"Dense" ID list:</b> high-cardinality discrete features, manually mapped to dense feature vectors
   * e.g `{productId022: [0.5, 1.3, ...], productId109: [1.9, 0.1, ...], ...}`
 
 ## Docs
