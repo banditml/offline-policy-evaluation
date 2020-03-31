@@ -87,13 +87,27 @@ def preprocess_data(
     X["decision"] = raw_data["decision"].values
 
     # fill in missing (NaN) rewards with empty metric maps
-    raw_data["metrics"] = raw_data["metrics"].fillna("{}")
-    y = pd.json_normalize(raw_data["metrics"].apply(lambda x: json.loads(x)))
-    y = y.fillna(0)
+    raw_data["immediate_reward"] = raw_data["immediate_reward"].fillna("{}")
+    immediate_y = pd.json_normalize(
+        raw_data["immediate_reward"].apply(lambda x: json.loads(x))
+    )
+    immediate_y = immediate_y.fillna(0)
 
-    # construct the reward scalar using a linear combination
-    X["reward"] = pd.Series(0, index=range(len(y)))
-    for metrics_name, series in y.iteritems():
+    raw_data["end_of_mdp_reward"] = raw_data["delayed_reward"].fillna("{}")
+    X["end_of_mdp_reward"] = (
+        raw_data["end_of_mdp_reward"].apply(lambda x: json.loads(x)).values
+    )
+
+    # first add all the end of mdp rewards if they are present. we assume end of
+    # mdp rewards always have the same key in the reward function map - endOfMdpReward
+    X["reward"] = X.apply(
+        lambda row: row["end_of_mdp_reward"].get(str(row["decision"]), 0)
+        * params["reward_function"]["endOfMdpReward"],
+        axis=1,
+    )
+
+    # then add the linear combination of immediate rewards
+    for metrics_name, series in immediate_y.iteritems():
         X["reward"] += series * params["reward_function"][metrics_name]
 
     reward_df = X["reward"]

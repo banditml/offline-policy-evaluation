@@ -36,25 +36,41 @@ class BigQueryReader:
         self.training_query = self._build_query()
 
     def _build_query(self):
+
         return f"""
-        with r as (
+        with immediate_r as (
             select
                 decision_id,
+                decision,
+                mdp_id,
                 metrics,
                 experiment_id
-            from `gradient-decision.gradient_app_staging.rewards`
+            from `{self.rewards_table_name}`
             where DATE(_PARTITIONTIME)
                 between "{self.decisions_ds_start}" and "{self.rewards_ds_end}"
                 and experiment_id = "{self.experiment_id}"
+        ),
+        delayed_r as (
+            select
+                *
+            from immediate_r
+            where decision_id is null
+              and decision is null
         )
         select
           d.context,
           d.decision,
-          r.metrics
+          immediate_r.metrics immediate_reward,
+          delayed_r.metrics delayed_reward
         from `{self.decisions_table_name}` d
-            left join r
-            on r.decision_id = d.decision_id
-            and r.experiment_id = d.experiment_id
+            left join immediate_r
+              on immediate_r.decision_id = d.decision_id
+              and immediate_r.decision = d.decision
+              and immediate_r.experiment_id = d.experiment_id
+              and immediate_r.mdp_id = d.mdp_id
+            left join delayed_r
+              on delayed_r.experiment_id = d.experiment_id
+              and delayed_r.mdp_id = d.mdp_id
         where date(d._PARTITIONTIME)
             between "{self.decisions_ds_start}" and "{self.decisions_ds_end}"
             and d.experiment_id = "{self.experiment_id}"

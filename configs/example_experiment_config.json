@@ -1,9 +1,9 @@
 {
-  "experiment_id": "test-experiment-height-prediction-v3",
-  "decisions_ds_start": "2020-03-16",
-  "decisions_ds_end": "2020-03-18",
-  "rewards_ds_end": "2020-03-19",
-  "reward_function": {"height": 1},
+  "experiment_id": "test-experiment-height-prediction-v8",
+  "decisions_ds_start": "2020-03-29",
+  "decisions_ds_end": "2020-03-31",
+  "rewards_ds_end": "2020-04-01",
+  "reward_function": {"height": 1, "endOfMdpReward": 1},
   "features": {
     "country": {
         "type": "P",
