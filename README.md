@@ -29,16 +29,16 @@ Models supported:
 - [ ] [Deep Q-learning with ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
 - [ ] [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
 
-All models can handle <b>4</b> types of features:
+<b>4</b> feature types supported:
 * <b>Numeric:</b> (standard floating point features)
-  * e.g. `[12.5, 1.3, ...]`
+  * e.g. `{totalCartValue: 39.99}`
 * <b>Categorical:</b> (low-cardinality discrete features)
-  * e.g. `['t-shirt', 'jeans', ...]`
+  * e.g. `{currentlyViewingCategory: "men's jeans"}`
 * <b>ID list:</b> (high-cardinality discrete features)
-  * e.g. `['productId1', ..., 'productId1001']`
-* Handled via. learned embedding tables
-  * <b>"Dense" ID list:</b> (high-cardinality discrete features, manually mapped to dense feature vectors)
-  * e.g `[productId1': [0.5, 1.3..], ..., 'productId1001': [1.9, 0.1..]]`)
+  * e.g. `{productsInCart: ["productId022", "productId109"...]}`
+  * Handled via. learned embedding tables
+* <b>"Dense" ID list:</b> (high-cardinality discrete features, manually mapped to dense feature vectors)
+  * e.g `{productId022: [0.5, 1.3, ...], productId109: [1.9, 0.1, ...], ...}`
 
 ## Docs
 
