@@ -13,8 +13,8 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="banditml",
-    version="0.1.1",
-    author="Edoardo Conti, Lionel Vital",
+    version="0.2.0",
+    author="Edoardo Conti, Lionel Vital, Joseph Gilley",
     author_email="edoardo.conti@gmail.com",
     description="Portable Bandit ML code for training & serving consistency.",
     long_description=long_description,
@@ -27,11 +27,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    install_requires=[
-        "pandas==1.0.1",
-        "torch==1.4.0",
-        "scikit-learn==0.22.2.post1",
-        "dill==0.3.1.1",
-        "skorch==0.7.0",
-    ],
+    install_requires=["pandas==1.0.1", "torch==1.4.0", "scikit-learn==0.22.2.post1"],
 )

@@ -32,7 +32,7 @@ class TestTrainBandit(unittest.TestCase):
         pass
 
     def test_pytorch_model_country_as_categorical(self):
-        pytorch_net = train_bandit.build_pytorch_net(
+        net_spec, pytorch_net = train_bandit.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
                 "features"
             ],
@@ -63,7 +63,7 @@ class TestTrainBandit(unittest.TestCase):
         assert test_mse < self.results_mlp["mse_test"] * 1.08
 
     def test_pytorch_model_country_as_id_list(self):
-        pytorch_net = train_bandit.build_pytorch_net(
+        net_spec, pytorch_net = train_bandit.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST[
                 "features"
             ],
@@ -94,7 +94,7 @@ class TestTrainBandit(unittest.TestCase):
         assert test_mse < self.results_mlp["mse_test"] * 1.08
 
     def test_pytorch_model_country_as_dense_id_list(self):
-        pytorch_net = train_bandit.build_pytorch_net(
+        net_spec, pytorch_net = train_bandit.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST[
                 "features"
             ],
@@ -127,7 +127,7 @@ class TestTrainBandit(unittest.TestCase):
         assert test_mse < self.results_mlp["mse_test"] * 1.08
 
     def test_pytorch_model_country_as_id_list_and_decision_as_id_list(self):
-        pytorch_net = train_bandit.build_pytorch_net(
+        net_spec, pytorch_net = train_bandit.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
                 "features"
             ],

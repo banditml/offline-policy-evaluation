@@ -3,13 +3,15 @@ Usage:
     python -m workflows.train_bandit \
         --params_path configs/bandit.json \
         --experiment_config_path configs/example_experiment_config.json \
-        --model_path trained_models/test_model.pkl \
+        --predictor_save_dir trained_models \
         --s3_bucket_to_write_to banditml-models
 """
 
 import argparse
 import json
+import os
 import time
+import shutil
 from typing import Dict, List, NoReturn, Tuple
 
 from skorch import NeuralNetRegressor
@@ -18,9 +20,8 @@ import torch
 import boto3
 from data_reader.bandit_reader import BigQueryReader
 from banditml_pkg.banditml.preprocessing import preprocessor
-from banditml_pkg.banditml.models.embed_dnn import EmbedDnn
+from banditml_pkg.banditml.models.embed_dnn import build_embedding_spec, EmbedDnn
 from banditml_pkg.banditml.serving.predictor import BanditPredictor
-from banditml_pkg.banditml import model_io
 from utils.utils import (
     get_logger,
     fancy_print,
@@ -43,14 +44,23 @@ def build_pytorch_net(
 ):
     """Build PyTorch model that will be fed into skorch training."""
     layers[0], layers[-1] = input_dim, output_dim
-    return EmbedDnn(
-        layers,
-        activations,
-        feature_specs=feature_specs,
-        product_sets=product_sets,
-        float_feature_order=float_feature_order,
-        id_feature_order=id_feature_order,
+
+    # handle changes of model architecture due to embeddings
+    first_layer_dim_increase, embedding_info = build_embedding_spec(
+        id_feature_order, feature_specs, product_sets
     )
+    layers[0] += first_layer_dim_increase
+
+    net_spec = {
+        "layers": layers,
+        "activations": activations,
+        "feature_specs": feature_specs,
+        "product_sets": product_sets,
+        "float_feature_order": float_feature_order,
+        "id_feature_order": id_feature_order,
+        "embedding_info": embedding_info,
+    }
+    return net_spec, EmbedDnn(**net_spec)
 
 
 def num_float_dim(data):
@@ -77,7 +87,8 @@ def fit_custom_pytorch_module_w_skorch(module, X, y, hyperparams):
 def train(
     shared_params: Dict,
     experiment_specific_params: Dict,
-    model_path: str = None,
+    model_name: str = None,
+    predictor_save_dir: str = None,
     s3_bucket_to_write_to: str = None,
 ):
 
@@ -99,7 +110,7 @@ def train(
     data = preprocessor.preprocess_data(raw_data, experiment_specific_params)
     X, y = preprocessor.data_to_pytorch(data)
 
-    pytorch_net = build_pytorch_net(
+    net_spec, pytorch_net = build_pytorch_net(
         feature_specs=experiment_specific_params["features"],
         product_sets=experiment_specific_params["product_sets"],
         float_feature_order=data["final_float_feature_order"],
@@ -111,31 +122,47 @@ def train(
     logger.info(f"Initialized model: {pytorch_net}")
 
     logger.info(f"Starting training: {shared_params['max_epochs']} epochs")
-    skorch_net = fit_custom_pytorch_module_w_skorch(
-        module=pytorch_net, X=X, y=y, hyperparams=shared_params
+
+    predictor = BanditPredictor(
+        experiment_specific_params=experiment_specific_params,
+        float_feature_order=data["float_feature_order"],
+        id_feature_order=data["id_feature_order"],
+        transforms=data["transforms"],
+        imputers=data["imputers"],
+        net=pytorch_net,
+        net_spec=net_spec,
     )
 
-    if model_path is not None:
-        predictor = BanditPredictor(
-            experiment_specific_params=experiment_specific_params,
-            float_feature_order=data["float_feature_order"],
-            id_feature_order=data["id_feature_order"],
-            transforms=data["transforms"],
-            imputers=data["imputers"],
-            net=skorch_net,
-        )
+    skorch_net = fit_custom_pytorch_module_w_skorch(
+        module=predictor.net, X=X, y=y, hyperparams=shared_params
+    )
 
-        model_io.write_predictor_to_disk(predictor, model_path)
+    if predictor_save_dir is not None:
+        experiment_id = experiment_specific_params.get("experiment_id", "test")
+        model_name = experiment_specific_params.get("model_name", "model")
+
+        save_dir = f"{predictor_save_dir}/{experiment_id}"
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        predictor_net_path = f"{save_dir}/{model_name}.pt"
+        predictor_config_path = f"{save_dir}/{model_name}.json"
+        predictor.config_to_file(predictor_config_path)
+        predictor.net_to_file(predictor_net_path)
 
         if s3_bucket_to_write_to is not None:
             # Assumes aws credentials stored in ~/.aws/credentials that looks like:
             # [default]
             # aws_access_key_id = YOUR_ACCESS_KEY
             # aws_secret_access_key = YOUR_SECRET_KEY
+            dir_to_zip = save_dir
+            output_path = save_dir
+            shutil.make_archive(output_path, "zip", dir_to_zip)
             s3_client = boto3.client("s3")
-            file_name = model_path.split("/")[-1]
             s3_client.upload_file(
-                model_path, Bucket=s3_bucket_to_write_to, Key=file_name
+                Filename=f"{output_path}.zip",
+                Bucket=s3_bucket_to_write_to,
+                Key=f"{experiment_id}.zip",
             )
 
 
@@ -160,13 +187,14 @@ def main(args):
             experiment_specific_params["reward_function"]
         )
         experiment_specific_params["experiment_id"] = args.experiment_id
+        experiment_specific_params["model_name"] = args.model_name
 
     logger.info("Using parameters: {}".format(wf_params))
     train(
-        wf_params,
-        experiment_specific_params,
-        args.model_path,
-        args.s3_bucket_to_write_to,
+        shared_params=wf_params,
+        experiment_specific_params=experiment_specific_params,
+        predictor_save_dir=args.predictor_save_dir,
+        s3_bucket_to_write_to=args.s3_bucket_to_write_to,
     )
     logger.info("Workflow completed successfully.")
     logger.info(f"Took {time.time() - start} seconds to complete.")
@@ -177,7 +205,8 @@ if __name__ == "__main__":
     parser.add_argument("--params_path", required=True, type=str)
     parser.add_argument("--experiment_config_path", required=False, type=str)
     parser.add_argument("--experiment_id", required=False, type=str)
-    parser.add_argument("--model_path", required=False, type=str)
+    parser.add_argument("--model_name", required=False, type=str)
+    parser.add_argument("--predictor_save_dir", required=False, type=str)
     parser.add_argument("--s3_bucket_to_write_to", required=False, type=str)
     args = parser.parse_args()
     main(args)
