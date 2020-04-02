@@ -1,3 +1,4 @@
+
 # Do it yourself quick start
 
 This guide walks through training and serving bandit models.
@@ -76,25 +77,24 @@ To serve the model in a Python service see the sample workflow `workflows/predic
 
 ```
 python -m workflows.predict \
-	--model_path trained_models/model.pkl
+	--predictor_dir trained_models/test-experiment-height-prediction-v8 \
+    --model_name model_v1
 ```
 
 To make model portability easier, you can use the [banditml pip package](https://pypi.org/project/banditml/) to
 serve your model in a Python service like this:
 
 ```
-import sys
+from banditml.serving.predictor import BanditPredictor
 
-import banditml
-from banditml import model_io
+config_path = "/some/model/path/model.json"
+net_path = "/some/model/path/model.pt"
 
-sys.modules["banditml_pkg"] = banditml
-sys.modules["banditml_pkg.banditml"] = banditml
-
-path = "/some/model/path/model.pkl"
-
-predictor = model_io.read_predictor_from_disk(path)
+predictor = BanditPredictor.predictor_from_file(config_path, net_path)
 print(predictor.predict({"country": 5, "year": 1990}))
+
+# Out:
+# {'scores': [[170.55471801757812], [146.3790283203125]], 'ids': [1, 2]}
 ```
 
 ## Running tests
