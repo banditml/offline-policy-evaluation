@@ -18,6 +18,27 @@ def gaussian_fill_w_gain(tensor, activation, dim_in, min_std=0.0) -> None:
     init.normal_(tensor, mean=0, std=max(gain * math.sqrt(1 / dim_in), min_std))
 
 
+def build_embedding_spec(id_feature_order, feature_specs, product_sets):
+    "Build the embedding spec up before creating a model."
+
+    first_layer_dim_increase = 0
+    # handle features that require embeddings
+    embedding_info = {}
+    for feature_name in id_feature_order:
+        meta = feature_specs[feature_name]
+        product_set_id = meta["product_set_id"]
+        num_ids = len(product_sets[product_set_id]["ids"])
+        # embedding size rule of thumb written by google:
+        # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
+        embedding_dim = math.ceil(num_ids ** 0.25)
+        first_layer_dim_increase += embedding_dim
+        embedding_info[product_set_id] = {
+            "num_ids": num_ids,
+            "embedding_dim": embedding_dim,
+        }
+    return first_layer_dim_increase, embedding_info
+
+
 class EmbedDnn(nn.Module):
     def __init__(
         self,
@@ -31,6 +52,7 @@ class EmbedDnn(nn.Module):
         product_sets={},
         float_feature_order=[],
         id_feature_order=[],
+        embedding_info={},
     ) -> None:
         super().__init__()
         self.layers: nn.ModuleList = nn.ModuleList()
@@ -46,6 +68,7 @@ class EmbedDnn(nn.Module):
         self.id_feature_order = id_feature_order
         self.embeddings = nn.ModuleList()
         self.embeddings_idx_map = {}
+        self.net_spec = {}
 
         assert len(layers) >= 2, "Invalid layer schema {} for network".format(layers)
 
@@ -53,17 +76,14 @@ class EmbedDnn(nn.Module):
         for feature_name in id_feature_order:
             meta = feature_specs[feature_name]
             product_set_id = meta["product_set_id"]
-            num_ids = len(product_sets[product_set_id]["ids"])
-            # embedding size rule of thumb written by google:
-            # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
-            embedding_dim = math.ceil(num_ids ** 0.25)
-            layers[0] += embedding_dim
-
             if product_set_id not in self.embeddings_idx_map:
+                info = embedding_info[product_set_id]
                 # add the +1 to num_ids as we need a 0 vector for the padding index
                 self.embeddings_idx_map[product_set_id] = len(self.embeddings)
                 self.embeddings.append(
-                    nn.Embedding(num_ids + 1, embedding_dim, padding_idx=0)
+                    nn.Embedding(
+                        info["num_ids"] + 1, info["embedding_dim"], padding_idx=0
+                    )
                 )
 
         for i, layer in enumerate(layers[1:]):
