@@ -35,6 +35,11 @@ class BanditPredictor:
         # the ordered decisions that we need to score over.
         self.decisions = []
 
+        # if using dropout to get prediction uncertainty, how many times to score
+        # the same observation
+        self.num_times_to_score = 30
+        self.ucb_percentile = 90
+
     def transform_feature(self, vals, transformer=None, imputer=None):
         vals = vals.reshape(-1, 1)
         if imputer:
@@ -105,11 +110,37 @@ class BanditPredictor:
         X, _ = preprocessor.data_to_pytorch(data)
         return X
 
-    def predict(self, input):
+    def predict(self, input, get_ucb_scores=False):
+        """
+        If `get_ucb_scores` is True, get upper confidence bound scores which
+        requires a model trained with dropout and for the model to be in train()
+        mode (eval model turns off dropout by default).
+        """
         input = self.preprocess_input(input)
         pytorch_input = self.preprocessed_input_to_pytorch(input)
-        scores = self.net.forward(**pytorch_input)
-        return {"scores": scores.tolist(), "ids": self.decisions}
+
+        with torch.no_grad():
+            scores = self.net.forward(**pytorch_input)
+            ucb_scores = []
+
+            if get_ucb_scores:
+                assert (
+                    self.net.use_dropout is True
+                ), "Can only get UCB scores if model was trained with dropout."
+                self.net.train()
+                scores_samples = torch.tensor(
+                    [
+                        self.net.forward(**pytorch_input).numpy()
+                        for i in range(self.num_times_to_score)
+                    ]
+                )
+                ucb_scores = np.percentile(scores_samples, q=95, axis=0).tolist()
+
+        return {
+            "scores": scores.tolist(),
+            "ids": self.decisions,
+            "ucb_scores": ucb_scores,
+        }
 
     def net_to_file(self, path):
         """
