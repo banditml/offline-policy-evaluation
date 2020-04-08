@@ -5,7 +5,8 @@ to make one off predictions.
 Usage:
     python -m workflows.predict \
     	--predictor_dir trained_models/test-experiment-height-prediction-v8 \
-        --model_name model_v1
+        --model_name model_v1 \
+        --get_ucb_scores
 """
 
 import argparse
@@ -23,11 +24,11 @@ from utils.utils import get_logger
 logger = get_logger(__name__)
 
 
-def get_decisions(json_input, predictor):
+def get_decisions(json_input, predictor, get_ucb_scores=False):
     """Function that simulates a real time Python service making
     a prediction."""
     input = json.loads(json_input)
-    return predictor.predict(input)
+    return predictor.predict(input, get_ucb_scores)
 
 
 def main(args):
@@ -38,7 +39,7 @@ def main(args):
     json_input = json.dumps({"year": 2019, "country": 4})
 
     start = time.time()
-    decisions = get_decisions(json_input, predictor)
+    decisions = get_decisions(json_input, predictor, args.get_ucb_scores)
     end = time.time()
 
     logger.info(f"Prediction request took {round(time.time() - start, 5)} seconds.")
@@ -49,5 +50,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--predictor_dir", required=True, type=str)
     parser.add_argument("--model_name", required=True, type=str)
+    parser.add_argument("--get_ucb_scores", action="store_true")
     args = parser.parse_args()
     main(args)

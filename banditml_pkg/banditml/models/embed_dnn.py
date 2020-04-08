@@ -1,4 +1,3 @@
-import logging
 import math
 from typing import Dict, List
 
@@ -7,9 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
-
-
-logger = logging.getLogger(__name__)
 
 
 def gaussian_fill_w_gain(tensor, activation, dim_in, min_std=0.0) -> None:

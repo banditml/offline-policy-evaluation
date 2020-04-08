@@ -41,6 +41,7 @@ def build_pytorch_net(
     activations,
     input_dim,
     output_dim=1,
+    dropout_ratio=0.0,
 ):
     """Build PyTorch model that will be fed into skorch training."""
     layers[0], layers[-1] = input_dim, output_dim
@@ -54,6 +55,7 @@ def build_pytorch_net(
     net_spec = {
         "layers": layers,
         "activations": activations,
+        "dropout_ratio": dropout_ratio,
         "feature_specs": feature_specs,
         "product_sets": product_sets,
         "float_feature_order": float_feature_order,
@@ -117,6 +119,7 @@ def train(
         id_feature_order=data["final_id_feature_order"],
         layers=shared_params["model"]["layers"],
         activations=shared_params["model"]["activations"],
+        dropout_ratio=shared_params["model"]["dropout_ratio"],
         input_dim=num_float_dim(data),
     )
     logger.info(f"Initialized model: {pytorch_net}")

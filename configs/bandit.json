@@ -10,7 +10,8 @@
   "batch_size": 64,
   "model": {
     "layers": [-1, 32, 16, -1],
-    "activations": ["relu", "relu", "linear"]
+    "activations": ["relu", "relu", "linear"],
+    "dropout_ratio": 0.02
   },
   "train_test_split": 0.8
 }

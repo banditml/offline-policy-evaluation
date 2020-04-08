@@ -23,9 +23,9 @@ This repo holds the open source machine learning code that powers [banditml.com]
 ## Supported models
 
 Models supported:
-- [x] Gradient boosted decision tree contextual bandit with ε-greedy exploration
+- [ ] Gradient boosted decision tree contextual bandit with ε-greedy exploration
 - [x] Neural contextual bandit with ε-greedy exploration
-- [x] [Neural contextual bandit with UCB-based exploration](https://arxiv.org/abs/1911.04462)
+- [x] [Neural contextual bandit with UCB-based exploration](https://arxiv.org/abs/1506.02142)
 - [ ] [Deep Q-learning with ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
 - [ ] [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
 
