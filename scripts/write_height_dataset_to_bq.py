@@ -63,11 +63,21 @@ NUM_GET_DECISION_CALLS = 10000
 
 def main(args):
     # initialize bigquery client
-    credentials = service_account.Credentials.from_service_account_file(args.creds_path) if args.creds_path else None
+    credentials = (
+        service_account.Credentials.from_service_account_file(args.creds_path)
+        if args.creds_path
+        else None
+    )
     client = bigquery.Client(project=args.project, credentials=credentials)
-    decision_table_immediate = client.get_table("{}.{}{}".format(args.dataset, args.decisions_table, IMMEDIATE_PARTITION))
-    reward_table_immediate = client.get_table("{}.{}{}".format(args.dataset, args.rewards_table, IMMEDIATE_PARTITION))
-    reward_table_delayed = client.get_table("{}.{}{}".format(args.dataset, args.rewards_table, DELAYED_PARTITION))
+    decision_table_immediate = client.get_table(
+        "{}.{}{}".format(args.dataset, args.decisions_table, IMMEDIATE_PARTITION)
+    )
+    reward_table_immediate = client.get_table(
+        "{}.{}{}".format(args.dataset, args.rewards_table, IMMEDIATE_PARTITION)
+    )
+    reward_table_delayed = client.get_table(
+        "{}.{}{}".format(args.dataset, args.rewards_table, DELAYED_PARTITION)
+    )
 
     # create decisions to insert into table
     decisions_to_insert, immediate_rewards_to_insert, end_of_mdp_rewards_to_insert = (
@@ -83,8 +93,8 @@ def main(args):
 
         mean_height_adjustment = (CURRENT_YEAR - year) * YEARLY_MEAN_CM_ADJUSTMENTS
         mu = (
-                CURRENT_HEIGHT_DISTRIBUTIONS[country][gender]["mean"]
-                - mean_height_adjustment
+            CURRENT_HEIGHT_DISTRIBUTIONS[country][gender]["mean"]
+            - mean_height_adjustment
         )
         sigma = CURRENT_HEIGHT_DISTRIBUTIONS[country][gender]["stddev"]
         height = np.random.normal(mu, sigma, 1)[0]

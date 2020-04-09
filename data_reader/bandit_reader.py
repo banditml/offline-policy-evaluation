@@ -30,9 +30,7 @@ class BigQueryReader:
         else:
             credentials = None
             project_id = None
-        self.client = bigquery.Client(
-            credentials=credentials, project=project_id
-        )
+        self.client = bigquery.Client(credentials=credentials, project=project_id)
         self.decisions_table_name = decisions_table_name
         self.rewards_table_name = rewards_table_name
         self.decisions_ds_start = decisions_ds_start

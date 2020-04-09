@@ -24,7 +24,7 @@ REWARDS_TABLE = "rewards"
 
 
 def create_dataset(
-        client: bigquery.Client, dataset_id: str, description: str, location: str
+    client: bigquery.Client, dataset_id: str, description: str, location: str
 ) -> None:
     """Creates a dataset in GCP.
 
@@ -42,11 +42,16 @@ def create_dataset(
         client.create_dataset(dataset)
         print("Created dataset {}.{}".format(client.project, dataset_id))
     except gexceptions.Conflict:
-        print("Dataset {} already existing in project {}. Skipping dataset creation...".format(dataset_id,
-                                                                                               client.project))
+        print(
+            "Dataset {} already existing in project {}. Skipping dataset creation...".format(
+                dataset_id, client.project
+            )
+        )
 
 
-def create_table(client: bigquery.Client, dataset_id: str, table_id: str, fields: List[Dict]):
+def create_table(
+    client: bigquery.Client, dataset_id: str, table_id: str, fields: List[Dict]
+):
     dataset = bigquery.Dataset("{}.{}".format(client.project, dataset_id))
     table_ref = dataset.table(table_id)
     table = bigquery.Table(table_ref, schema=fields)
@@ -54,16 +59,26 @@ def create_table(client: bigquery.Client, dataset_id: str, table_id: str, fields
 
     try:
         table = client.create_table(table)
-        print("Created table {}.{}.{}".format(table.project, table.dataset_id, table.table_id))
+        print(
+            "Created table {}.{}.{}".format(
+                table.project, table.dataset_id, table.table_id
+            )
+        )
     except gexceptions.GoogleAPIError as e:
         print("Table {} could not be created: {}. Skipping...".format(table_id, e))
 
 
 def main(args) -> None:
     """Create BigQuery tables"""
-    credentials = service_account.Credentials.from_service_account_file(args.creds_path) if args.creds_path else None
+    credentials = (
+        service_account.Credentials.from_service_account_file(args.creds_path)
+        if args.creds_path
+        else None
+    )
     client = bigquery.Client(project=args.project, credentials=credentials)
-    create_dataset(client, args.dataset, args.dataset_description, args.dataset_location)
+    create_dataset(
+        client, args.dataset, args.dataset_description, args.dataset_location
+    )
 
     # create decision table
     with open("scripts/schemas/decisions.json") as decisions_schema:

@@ -11,9 +11,7 @@ Usage:
 
 import argparse
 import json
-import pickle
 import time
-import zipfile
 
 import numpy as np
 from sklearn.preprocessing import scale
@@ -30,12 +28,14 @@ def softmax(x):
 
 
 def get_single_decision(decisions):
-    scores = np.ndarray.flatten(np.array(decisions['scores']))
+    scores = np.ndarray.flatten(np.array(decisions["scores"]))
     scores = softmax(scale(scores, with_mean=False, with_std=True))
 
     return {
-        'greedyranker_decision': decisions['ids'][np.argmax(scores)],
-        'softmaxranker_decision': decisions['ids'][np.random.choice(len(scores), p=scores)]
+        "greedyranker_decision": decisions["ids"][np.argmax(scores)],
+        "softmaxranker_decision": decisions["ids"][
+            np.random.choice(len(scores), p=scores)
+        ],
     }
 
 
@@ -57,10 +57,12 @@ def main(args):
     decisions = get_decisions(json_input, predictor, args.get_ucb_scores)
     end = time.time()
 
-    logger.info(f"Prediction request took {round(time.time() - start, 5)} seconds.")
+    logger.info(f"Prediction request took {round(end - start, 5)} seconds.")
     logger.info(f"Predictions: {decisions}")
     if args.get_exploration_decision:
-        logger.info(f"Single exploitation/exploration decision: {get_single_decision(decisions)}")
+        logger.info(
+            f"Single exploitation/exploration decision: {get_single_decision(decisions)}"
+        )
 
 
 if __name__ == "__main__":
