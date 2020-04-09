@@ -1,15 +1,14 @@
 """
 Script to fill bigquery table with intentionally simple dummy data.
-Used to sanity test Bandit ML model implemenations.
+Used to sanity test Bandit ML model implementations.
 
 Usage:
     python scripts/write_height_dataset_to_bq.py
 """
 
-from collections import defaultdict
+import argparse
 import json
 import random
-import sys
 import time
 import uuid
 
@@ -17,12 +16,14 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 import numpy as np
 
-
 # Bigquery configs
 PROJECT = "gradient-decision"
-DECISION_TABLE_NAME = "gradient_app_staging.decisions"
-REWARDS_TABLE_NAME = "gradient_app_staging.rewards"
+DATASET_ID = "gradient_app_staging"
+DECISION_TABLE = "decisions"
+REWARDS_TABLE = "rewards"
 CREDS_PATH = "credentials/bq_creds.json"
+IMMEDIATE_PARTITION = "$20200330"
+DELAYED_PARTITION = "$20200401"
 
 EXPERIMENT_ID = "test-experiment-height-prediction-v8"
 CURRENT_HEIGHT_DISTRIBUTIONS = {
@@ -60,12 +61,13 @@ POSSIBLE_YEARS = range(CURRENT_YEAR - 50, CURRENT_YEAR + 1)
 NUM_GET_DECISION_CALLS = 10000
 
 
-def main():
-    # intialize bigquery client
-    credentials = service_account.Credentials.from_service_account_file(CREDS_PATH)
-    client = bigquery.Client(project=PROJECT, credentials=credentials)
-    decision_table = client.get_table(DECISION_TABLE_NAME)
-    reward_table = client.get_table(REWARDS_TABLE_NAME)
+def main(args):
+    # initialize bigquery client
+    credentials = service_account.Credentials.from_service_account_file(args.creds_path) if args.creds_path else None
+    client = bigquery.Client(project=args.project, credentials=credentials)
+    decision_table_immediate = client.get_table("{}.{}{}".format(args.dataset, args.decisions_table, IMMEDIATE_PARTITION))
+    reward_table_immediate = client.get_table("{}.{}{}".format(args.dataset, args.rewards_table, IMMEDIATE_PARTITION))
+    reward_table_delayed = client.get_table("{}.{}{}".format(args.dataset, args.rewards_table, DELAYED_PARTITION))
 
     # create decisions to insert into table
     decisions_to_insert, immediate_rewards_to_insert, end_of_mdp_rewards_to_insert = (
@@ -74,16 +76,15 @@ def main():
         [],
     )
     for i in range(NUM_GET_DECISION_CALLS):
-
-        # pick random country, genderm & year
+        # pick random country, gender & year
         country = random.choice(list(CURRENT_HEIGHT_DISTRIBUTIONS.keys()))
         gender = random.choice(["male", "female"])
         year = random.choice(POSSIBLE_YEARS)
 
         mean_height_adjustment = (CURRENT_YEAR - year) * YEARLY_MEAN_CM_ADJUSTMENTS
         mu = (
-            CURRENT_HEIGHT_DISTRIBUTIONS[country][gender]["mean"]
-            - mean_height_adjustment
+                CURRENT_HEIGHT_DISTRIBUTIONS[country][gender]["mean"]
+                - mean_height_adjustment
         )
         sigma = CURRENT_HEIGHT_DISTRIBUTIONS[country][gender]["stddev"]
         height = np.random.normal(mu, sigma, 1)[0]
@@ -153,21 +154,53 @@ def main():
         )
 
     # insert decisions into BQ table
-    client.insert_rows(decision_table, decisions_to_insert)
+    client.insert_rows(decision_table_immediate, decisions_to_insert)
     print(f"Successfully inserted {NUM_GET_DECISION_CALLS} decisions.")
 
     # insert immediate rewards into BQ table
-    client.insert_rows(reward_table, immediate_rewards_to_insert)
+    client.insert_rows(reward_table_immediate, immediate_rewards_to_insert)
     print(
         f"Successfully inserted {len(immediate_rewards_to_insert)} immediate rewards."
     )
 
     # insert end of MDP rewards into BQ table
-    client.insert_rows(reward_table, end_of_mdp_rewards_to_insert)
+    client.insert_rows(reward_table_delayed, end_of_mdp_rewards_to_insert)
     print(
         f"Successfully inserted {len(end_of_mdp_rewards_to_insert)} end of MDP rewards."
     )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--project",
+        type=str,
+        help="The ID of the GCP project where to create the Bigquery tables.",
+        default=PROJECT,
+    )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        help="Dataset id in which to create tables in BigQuery.",
+        default=DATASET_ID,
+    )
+    parser.add_argument(
+        "--decisions_table",
+        type=str,
+        help="Full name of the decision table (with the dataset).",
+        default=DECISION_TABLE,
+    )
+    parser.add_argument(
+        "--rewards_table",
+        type=str,
+        help="Full name of the rewards table (with the dataset).",
+        default=REWARDS_TABLE,
+    )
+    parser.add_argument(
+        "--creds_path",
+        type=str,
+        help="Path to a GCP credentials file",
+        required=False,  # current account is ok
+    )
+    args = parser.parse_args()
+    main(args)

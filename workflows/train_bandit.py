@@ -12,6 +12,7 @@ import json
 import os
 import time
 import shutil
+import sys
 from typing import Dict, List, NoReturn, Tuple
 
 from skorch import NeuralNetRegressor
@@ -106,6 +107,9 @@ def train(
     )
 
     raw_data = data_reader.get_training_data()
+    if len(raw_data) == 0:
+        logger.error(f"Got no raws of training data. Training aborted.")
+        sys.exit()
     logger.info(f"Got {len(raw_data)} rows of training data.")
     logger.info(raw_data.head())
 

@@ -66,10 +66,10 @@ Then, to train a model simply run:
  python -m workflows.train_bandit \
      --params_path configs/bandit.json \
      --experiment_config_path configs/example_experiment_config.json \
-     --model_path trained_models/model.pkl
+     --predictor_save_dir trained_models
 ```
 
-This saves a model `model.pkl` in `trained_models`.
+This saves model artefacts `model_v1.json` and `model_v1.pt` in `trained_models/test-experiment-height-prediction-v8`.
 
 ## Serving a model
 

@@ -1,0 +1,37 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "decision_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "context",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "decision",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "experiment_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "variation_id",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "mdp_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ts",
+    "type": "INTEGER"
+  }
+]
