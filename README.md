@@ -53,3 +53,9 @@ Alternatively, the  [hosted solution](https://www.banditml.com)  offers an end-t
 - Model understanding & insight tools
 
 The docs to the hosted solution can be found [here](https://www.banditml.com/docs/).
+
+## License
+
+GNU General Public License v3.0 or later
+
+See [COPYING](COPYING) to see the full text.
