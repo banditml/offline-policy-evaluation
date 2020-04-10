@@ -4,7 +4,7 @@
 This guide walks through training and serving bandit models.
 
 ## Installation
-banditml requires Python (>= 3.8).
+banditml requires Python (>= 3.7).
 
 Clone the repo & install the requirements:
 ```
