@@ -4,6 +4,8 @@
 This guide walks through training and serving bandit models.
 
 ## Installation
+banditml requires Python (>= 3.8).
+
 Clone the repo & install the requirements:
 ```
 git clone https://github.com/banditml/banditml.git
@@ -56,6 +58,23 @@ Rewards can be `immediate` (e.g. a click on something recommeded) or `delayed` (
 
 In the example above, `decision_id` `c2aa520f` would get an additional `10.5` reward at training time as we have a matching delayed reward in row `3` based on `mdp_id` and key `1` in `metrics`.
 
+## Loading data
+The schemas of the 2 BigQuery tables can be found in [scripts/schemas](scripts/schemas).  
+To create the two tables, run:
+
+```
+ python scripts/create_bq_tables.py \
+     --project=[MY_GCP_PROJECT]
+```
+Use `--help` to see all the GCP related parameters that can be defined.
+
+To load some dummy data, run:
+```
+ python scripts/write_height_dataset_to_bq.py \
+     --project=[MY_GCP_PROJECT]
+```
+Use `--help` to see all the GCP related parameters that can be defined. 
+
 ## Training a model
 
 Once data is in BigQuery in the proper format, we can train a model. To train a model, create a config file that specifies information about the model, features, and reward function. For a sample config, see [example_experiment_config.json](configs/example_experiment_config.json).
@@ -66,10 +85,10 @@ Then, to train a model simply run:
  python -m workflows.train_bandit \
      --params_path configs/bandit.json \
      --experiment_config_path configs/example_experiment_config.json \
-     --model_path trained_models/model.pkl
+     --predictor_save_dir trained_models
 ```
 
-This saves a model `model.pkl` in `trained_models`.
+This saves model artefacts `model_v1.json` and `model_v1.pt` in `trained_models/test-experiment-height-prediction-v8`.
 
 ## Serving a model
 

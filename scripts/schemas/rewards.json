@@ -1,0 +1,32 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "decision_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "decision",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "metrics",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "experiment_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "mdp_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ts",
+    "type": "INTEGER"
+  }
+]

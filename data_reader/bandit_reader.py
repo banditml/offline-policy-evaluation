@@ -2,6 +2,7 @@ import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from retry import retry
+from typing import Optional
 
 from utils.utils import get_logger
 
@@ -12,7 +13,7 @@ logger = get_logger(__name__)
 class BigQueryReader:
     def __init__(
         self,
-        credential_path: str,
+        credential_path: Optional[str],
         decisions_table_name: str,
         rewards_table_name: str,
         decisions_ds_start: str,
@@ -20,13 +21,16 @@ class BigQueryReader:
         rewards_ds_end: str,
         experiment_id: str,
     ):
-        credentials = service_account.Credentials.from_service_account_file(
-            filename=credential_path,
-            scopes=["https://www.googleapis.com/auth/cloud-platform"],
-        )
-        self.client = bigquery.Client(
-            credentials=credentials, project=credentials.project_id
-        )
+        if credential_path:
+            credentials = service_account.Credentials.from_service_account_file(
+                filename=credential_path,
+                scopes=["https://www.googleapis.com/auth/cloud-platform"],
+            )
+            project_id = credentials.project_id
+        else:
+            credentials = None
+            project_id = None
+        self.client = bigquery.Client(credentials=credentials, project=project_id)
         self.decisions_table_name = decisions_table_name
         self.rewards_table_name = rewards_table_name
         self.decisions_ds_start = decisions_ds_start
