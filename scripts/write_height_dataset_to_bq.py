@@ -63,11 +63,12 @@ NUM_GET_DECISION_CALLS = 10000
 
 def main(args):
     # initialize bigquery client
-    credentials = (
-        service_account.Credentials.from_service_account_file(args.creds_path)
-        if args.creds_path
-        else None
-    )
+    if args.creds_path:
+        credentials = service_account.Credentials.from_service_account_file(
+            args.creds_path
+        )
+    else:
+        credentials = None
     client = bigquery.Client(project=args.project, credentials=credentials)
     decision_table_immediate = client.get_table(
         "{}.{}{}".format(args.dataset, args.decisions_table, IMMEDIATE_PARTITION)

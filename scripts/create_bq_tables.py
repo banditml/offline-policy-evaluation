@@ -70,11 +70,12 @@ def create_table(
 
 def main(args) -> None:
     """Create BigQuery tables"""
-    credentials = (
-        service_account.Credentials.from_service_account_file(args.creds_path)
-        if args.creds_path
-        else None
-    )
+    if args.creds_path:
+        credentials = service_account.Credentials.from_service_account_file(
+            args.creds_path
+        )
+    else:
+        credentials = None
     client = bigquery.Client(project=args.project, credentials=credentials)
     create_dataset(
         client, args.dataset, args.dataset_description, args.dataset_location
