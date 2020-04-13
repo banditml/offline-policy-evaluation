@@ -1,4 +1,3 @@
-
 # Do it yourself quick start
 
 This guide walks through training and serving bandit models.
@@ -45,18 +44,18 @@ Sample records:
 
 Sample records:
 ```
- Row | decision_id | decision |       metrics       |   experiment_id   | mdp_id |     ts     |
------|-------------|----------|---------------------|-------------------|--------|------------|
-  1  |   c2aa520f  |     1    | {"height": 158.462} | height-prediction |    a   | 1585613418 |
-  2  |   f3e637a5  |     2    | {"height": 172.331} | height-prediction |    b   | 1585934016 |
-  3  |             |          |     {"1": 10.5}     | height-prediction |    a   | 1599999016 |
+ Row | decision_id | decision |           metrics           |   experiment_id   | mdp_id |     ts     |
+-----|-------------|----------|-----------------------------|-------------------|--------|------------|
+  1  |   c2aa520f  |     1    |     {"height": 158.462}     | height-prediction |    a   | 1585613418 |
+  2  |   f3e637a5  |     2    |     {"height": 172.331}     | height-prediction |    b   | 1585934016 |
+  3  |             |          | {"1": {"delayedMetric": 1}} | height-prediction |    a   | 1599999016 |
 ```
 
 **IMPORTANT:**  <b>*Immediate*</b> rewards vs. <b>*delayed*</b> rewards:
 
-Rewards can be `immediate` (e.g. a click on something recommeded) or `delayed` (e.g. a user purchases something you previously recommended at the end of a session after some browsing and after other decisions have been made). In the `rewards` table we handle both of these types of reward and use the following convention to distinguish them. `immedate` rewards should be logged with both a `decision_id` and a `decision` (e.g. rows `1` and `2` above). These reward rows are simply joined to their corresponding rows in the `decisions table`. `delayed` rewards should be logged without a `decision_id` and `decision` (e.g. row `3` above). `delayed` rewards should have keys in `metrics` that correspond to decisions previously made throughout the MDP. banditml joins these delayed rewards to the correct corresponding rows in the `decisions` table based on the `mdp_id` and where those specific decisions were chosen throughout the MDP.
+Rewards can be `immediate` (e.g. a click on something recommended) or `delayed` (e.g. a user purchases something you previously recommended at the end of a session after some browsing and after other decisions have been made). In the `rewards` table we handle both of these types of reward and use the following convention to distinguish them. `immedate` rewards should be logged with both a `decision_id` and a `decision` (e.g. rows `1` and `2` above). These reward rows are simply joined to their corresponding rows in the `decisions table`. `delayed` rewards should be logged without a `decision_id` and `decision` (e.g. row `3` above). `delayed` rewards should have keys in `metrics` that correspond to decisions previously made throughout the MDP. banditml joins these delayed rewards to the correct corresponding rows in the `decisions` table based on the `mdp_id` and where those specific decisions were chosen throughout the MDP.
 
-In the example above, `decision_id` `c2aa520f` would get an additional `10.5` reward at training time as we have a matching delayed reward in row `3` based on `mdp_id` and key `1` in `metrics`.
+In the example above, `decision_id` `c2aa520f` would get an additional reward for the `delayedMetric` metric at training time. This is because we have a matching delayed reward in row `3` based on `mdp_id` and key `1` in `metrics`.
 
 ## Loading data
 The schemas of the 2 BigQuery tables can be found in [scripts/schemas](scripts/schemas).  
@@ -73,7 +72,7 @@ To load some dummy data, run:
  python scripts/write_height_dataset_to_bq.py \
      --project=[MY_GCP_PROJECT]
 ```
-Use `--help` to see all the GCP related parameters that can be defined. 
+Use `--help` to see all the GCP related parameters that can be defined.
 
 ## Training a model
 

@@ -93,21 +93,27 @@ def preprocess_data(
     )
     immediate_y = immediate_y.fillna(0)
 
+    # calculate the delayed rewards which requires joining them to their
+    # previous decisions
     raw_data["end_of_mdp_reward"] = raw_data["delayed_reward"].fillna("{}")
     X["end_of_mdp_reward"] = (
         raw_data["end_of_mdp_reward"].apply(lambda x: json.loads(x)).values
     )
-
-    # first add all the end of mdp rewards if they are present. we assume end of
-    # mdp rewards always have the same key in the reward function map - endOfMdpReward
-    X["reward"] = X.apply(
-        lambda row: row["end_of_mdp_reward"].get(str(row["decision"]), 0)
-        * params["reward_function"]["endOfMdpReward"],
-        axis=1,
+    delayed_rewards = X.apply(
+        lambda row: row["end_of_mdp_reward"].get(str(row["decision"]), {}), axis=1
     )
+    delayed_y = pd.json_normalize(delayed_rewards)
+    delayed_y = delayed_y.fillna(0)
+
+    # initialize the final reward scalar with 0s
+    X["reward"] = np.zeros(len(X))
 
     # then add the linear combination of immediate rewards
     for metrics_name, series in immediate_y.iteritems():
+        X["reward"] += series * params["reward_function"][metrics_name]
+
+    # then add the linear combination of delayed rewards
+    for metrics_name, series in delayed_y.iteritems():
         X["reward"] += series * params["reward_function"][metrics_name]
 
     reward_df = X["reward"]
