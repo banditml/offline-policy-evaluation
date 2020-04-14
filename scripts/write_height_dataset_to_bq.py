@@ -25,7 +25,7 @@ CREDS_PATH = "credentials/bq_creds.json"
 IMMEDIATE_PARTITION = "$20200330"
 DELAYED_PARTITION = "$20200401"
 
-EXPERIMENT_ID = "test-experiment-height-prediction-v8"
+EXPERIMENT_ID = "test-experiment-height-prediction-v9"
 CURRENT_HEIGHT_DISTRIBUTIONS = {
     "usa": {
         "id": 1,
@@ -153,11 +153,14 @@ def main(args):
         # and add end of MDP rewards. in this problem all rewards are immediate
         # so add these as 0's to test the joining logic in training. in practice
         # end of MDP metrics' keys map to previous decisions
+        rand_previous_decision = random.choice(list(GENDER_MAP.values()))
         end_of_mdp_rewards_to_insert.append(
             {
                 "decision_id": None,
                 "decision": None,
-                "metrics": json.dumps({1: 0}),
+                "metrics": json.dumps(
+                    {rand_previous_decision: {"nameOfADelayedReward": 0}}
+                ),
                 "experiment_id": EXPERIMENT_ID,
                 "mdp_id": str(i),
                 "ts": int(time.time()),

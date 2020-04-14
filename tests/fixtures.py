@@ -24,7 +24,7 @@ class Params:
                 "product_set_id": None,
             },
         },
-        "reward_function": {"height": 1, "endOfMdpReward": 1},
+        "reward_function": {"height": 1, "nameOfADelayedReward": 1},
         "product_sets": {
             "1": {
                 "ids": [1, 2, 3, 4, 5],
