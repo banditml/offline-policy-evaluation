@@ -28,6 +28,7 @@ Models supported:
 - [x] Neural contextual bandit with UCB-based exploration [(via. dropout exploration)](https://arxiv.org/abs/1506.02142)
 - [ ] Neural contextual bandit with UCB-based exploration [(via. Bayesian linear regression last layer)](https://arxiv.org/abs/1802.09127)
 - [ ] [Deep Q-learning with ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
+- [ ] [Quantile regression DQN with ε-greedy exploration](https://arxiv.org/abs/1710.10044)
 - [ ] [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
 
 <b>4</b> feature types supported:
