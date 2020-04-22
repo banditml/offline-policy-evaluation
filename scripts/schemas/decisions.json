@@ -12,7 +12,7 @@
   {
     "mode": "REQUIRED",
     "name": "decision",
-    "type": "INTEGER"
+    "type": "STRING"
   },
   {
     "mode": "NULLABLE",
@@ -33,5 +33,10 @@
     "mode": "NULLABLE",
     "name": "ts",
     "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "score",
+    "type": "FLOAT"
   }
 ]

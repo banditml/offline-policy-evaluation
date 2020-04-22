@@ -18,7 +18,7 @@ from typing import Dict, List
 
 # temp code
 PROJECT = "gradient-decision"
-DATASET_ID = "gradient_app_staging"
+DATASET_ID = "bandit_app"
 DECISION_TABLE = "decisions"
 REWARDS_TABLE = "rewards"
 

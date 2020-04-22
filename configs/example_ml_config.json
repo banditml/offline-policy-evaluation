@@ -1,0 +1,23 @@
+{
+  "data_reader": {
+    "credential_path": "credentials/bq_creds.json",
+    "bq_project": "gradient-decision",
+    "bq_dataset": "gradient_app_staging",
+    "decisions_table": "decisions",
+    "rewards_table": "rewards",
+    "decisions_ds_start": "2020-04-20",
+    "decisions_ds_end": "2020-04-21",
+    "rewards_ds_end": "2020-04-23",
+    "reward_function": {"height": 1, "nameOfADelayedReward": 0.05}
+  },
+  "max_epochs": 50,
+  "learning_rate": 0.001,
+  "l2_decay": 0.0001,
+  "batch_size": 64,
+  "model": {
+    "layers": [-1, 32, 16, -1],
+    "activations": ["relu", "relu", "linear"],
+    "dropout_ratio": 0.00
+  },
+  "train_test_split": 0.8
+}

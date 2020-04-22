@@ -1,3 +1,4 @@
+from collections import defaultdict
 import json
 import time
 
@@ -16,17 +17,19 @@ class BanditPredictor:
 
     def __init__(
         self,
-        experiment_specific_params,
+        experiment_params,
         float_feature_order,
         id_feature_order,
+        id_feature_str_to_int_map,
         transforms,
         imputers,
         net,
         net_spec=None,
     ):
-        self.experiment_specific_params = experiment_specific_params
+        self.experiment_params = experiment_params
         self.float_feature_order = float_feature_order
         self.id_feature_order = id_feature_order
+        self.id_feature_str_to_int_map = id_feature_str_to_int_map
         self.transforms = transforms
         self.imputers = imputers
         self.net = net
@@ -51,15 +54,13 @@ class BanditPredictor:
 
     def preprocess_input(self, input):
         # score all decisions so expand the input across decisions
-        decision_meta = self.experiment_specific_params["features"]["decision"]
+        decision_meta = self.experiment_params["features"]["decision"]
         if decision_meta["type"] == "C":
             decisions = decision_meta["possible_values"]
             expanded_input = [dict(input, **{"decision": d}) for d in decisions]
         elif decision_meta["type"] == "P":
             product_set_id = decision_meta["product_set_id"]
-            product_set = self.experiment_specific_params["product_sets"][
-                product_set_id
-            ]
+            product_set = self.experiment_params["product_sets"][product_set_id]
             decisions = product_set["ids"]
             expanded_input = [dict(input, **{"decision": d}) for d in decisions]
 
@@ -77,28 +78,39 @@ class BanditPredictor:
             float_feature_array = np.append(float_feature_array, values, axis=1)
 
         for feature_name in self.id_feature_order:
-            meta = self.experiment_specific_params["features"][feature_name]
+            meta = self.experiment_params["features"][feature_name]
             product_set_id = meta["product_set_id"]
-            product_set_meta = self.experiment_specific_params["product_sets"][
-                product_set_id
-            ]
+            product_set_meta = self.experiment_params["product_sets"][product_set_id]
             if meta["use_dense"] is True and "dense" in product_set_meta:
-                # if dense is true then convert ID's into their dense features
-                dense = np.array(
-                    [product_set_meta["dense"][str(i)] for i in df[feature_name].values]
-                )
-                for idx, feature in enumerate(product_set_meta["features"]):
-                    vals = dense[:, idx]
+
+                dense = defaultdict(list)
+                # TODO: don't like that this is O(n^2), think about better way to do this
+                for val in df[feature_name].values:
+                    for idx, feature_spec in enumerate(product_set_meta["features"]):
+                        dense_feature_name = feature_spec["name"]
+                        dense_feature_val = product_set_meta["dense"][val][idx]
+                        dense[dense_feature_name].append(dense_feature_val)
+
+                for idx, feature_spec in enumerate(product_set_meta["features"]):
+                    dtype = (
+                        np.dtype(float)
+                        if feature_spec["type"] == "N"
+                        else np.dtype(object)
+                    )
+                    vals = np.array(dense[feature_spec["name"]], dtype=dtype)
                     values = self.transform_feature(
                         vals,
-                        self.transforms[feature["name"]],
-                        self.imputers[feature["name"]],
+                        self.transforms[feature_spec["name"]],
+                        self.imputers[feature_spec["name"]],
                     )
                     float_feature_array = np.append(float_feature_array, values, axis=1)
             else:
-                # sparse id list features aren't preprocessed, instead they use an
-                # embedding table which is built into the pytorch model
-                values = self.transform_feature(df[feature_name].values)
+                # sparse id list features need to be converted from string to int,
+                # but aside from that are not imputed or transformed.
+                str_to_int_map = self.id_feature_str_to_int_map[product_set_id]
+                values = self.transform_feature(
+                    df[feature_name].apply(lambda x: str_to_int_map[x]).values
+                )
                 id_list_feature_array = np.append(id_list_feature_array, values, axis=1)
 
         return {
@@ -157,9 +169,10 @@ class BanditPredictor:
         """
         output = {
             "net_spec": self.net_spec,
-            "experiment_specific_params": self.experiment_specific_params,
+            "experiment_params": self.experiment_params,
             "float_feature_order": self.float_feature_order,
             "id_feature_order": self.id_feature_order,
+            "id_feature_str_to_int_map": self.id_feature_str_to_int_map,
             "transforms": {},
             "imputers": {},
         }
@@ -247,9 +260,10 @@ class BanditPredictor:
             imputers[feature_name] = imputer
 
         return BanditPredictor(
-            experiment_specific_params=config_dict["experiment_specific_params"],
+            experiment_params=config_dict["experiment_params"],
             float_feature_order=config_dict["float_feature_order"],
             id_feature_order=config_dict["id_feature_order"],
+            id_feature_str_to_int_map=config_dict["id_feature_str_to_int_map"],
             transforms=transforms,
             imputers=imputers,
             net=net,

@@ -16,7 +16,7 @@ class TestTrainBandit(unittest.TestCase):
             y_train=Datasets.X_COUNTRY_CATEG["y_train"],
             X_test=Datasets.X_COUNTRY_CATEG["X_test"]["X_float"],
             y_test=Datasets.X_COUNTRY_CATEG["y_test"],
-            hyperparams=Params.SHARED_PARAMS,
+            hyperparams=Params.ML_PARAMS,
         )
 
         cls.results_mlp = benchmarks.fit_sklearn_mlp(
@@ -24,7 +24,7 @@ class TestTrainBandit(unittest.TestCase):
             y_train=Datasets.X_COUNTRY_CATEG["y_train"],
             X_test=Datasets.X_COUNTRY_CATEG["X_test"]["X_float"],
             y_test=Datasets.X_COUNTRY_CATEG["y_test"],
-            hyperparams=Params.SHARED_PARAMS,
+            hyperparams=Params.ML_PARAMS,
         )
 
     @classmethod
@@ -43,8 +43,8 @@ class TestTrainBandit(unittest.TestCase):
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_CATEG["final_id_feature_order"],
-            layers=Params.SHARED_PARAMS["model"]["layers"],
-            activations=Params.SHARED_PARAMS["model"]["activations"],
+            layers=Params.ML_PARAMS["model"]["layers"],
+            activations=Params.ML_PARAMS["model"]["activations"],
             input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_CATEG),
         )
 
@@ -52,7 +52,7 @@ class TestTrainBandit(unittest.TestCase):
             module=pytorch_net,
             X=Datasets.X_COUNTRY_CATEG["X_train"],
             y=Datasets.X_COUNTRY_CATEG["y_train"],
-            hyperparams=Params.SHARED_PARAMS,
+            hyperparams=Params.ML_PARAMS,
         )
 
         test_mse = skorch_net.history[-1]["valid_loss"]
@@ -74,8 +74,8 @@ class TestTrainBandit(unittest.TestCase):
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_ID_LIST["final_id_feature_order"],
-            layers=Params.SHARED_PARAMS["model"]["layers"],
-            activations=Params.SHARED_PARAMS["model"]["activations"],
+            layers=Params.ML_PARAMS["model"]["layers"],
+            activations=Params.ML_PARAMS["model"]["activations"],
             input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_ID_LIST),
         )
 
@@ -83,7 +83,7 @@ class TestTrainBandit(unittest.TestCase):
             module=pytorch_net,
             X=Datasets.X_COUNTRY_ID_LIST["X_train"],
             y=Datasets.X_COUNTRY_ID_LIST["y_train"],
-            hyperparams=Params.SHARED_PARAMS,
+            hyperparams=Params.ML_PARAMS,
         )
 
         test_mse = skorch_net.history[-1]["valid_loss"]
@@ -107,8 +107,8 @@ class TestTrainBandit(unittest.TestCase):
             id_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
                 "final_id_feature_order"
             ],
-            layers=Params.SHARED_PARAMS["model"]["layers"],
-            activations=Params.SHARED_PARAMS["model"]["activations"],
+            layers=Params.ML_PARAMS["model"]["layers"],
+            activations=Params.ML_PARAMS["model"]["activations"],
             input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_DENSE_ID_LIST),
         )
 
@@ -116,7 +116,7 @@ class TestTrainBandit(unittest.TestCase):
             module=pytorch_net,
             X=Datasets.X_COUNTRY_DENSE_ID_LIST["X_train"],
             y=Datasets.X_COUNTRY_DENSE_ID_LIST["y_train"],
-            hyperparams=Params.SHARED_PARAMS,
+            hyperparams=Params.ML_PARAMS,
         )
 
         test_mse = skorch_net.history[-1]["valid_loss"]
@@ -140,8 +140,8 @@ class TestTrainBandit(unittest.TestCase):
             id_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
                 "final_id_feature_order"
             ],
-            layers=Params.SHARED_PARAMS["model"]["layers"],
-            activations=Params.SHARED_PARAMS["model"]["activations"],
+            layers=Params.ML_PARAMS["model"]["layers"],
+            activations=Params.ML_PARAMS["model"]["activations"],
             input_dim=train_bandit.num_float_dim(
                 Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST
             ),
@@ -151,7 +151,7 @@ class TestTrainBandit(unittest.TestCase):
             module=pytorch_net,
             X=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
             y=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"],
-            hyperparams=Params.SHARED_PARAMS,
+            hyperparams=Params.ML_PARAMS,
         )
 
         test_mse = skorch_net.history[-1]["valid_loss"]
