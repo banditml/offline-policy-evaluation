@@ -1,3 +1,4 @@
+from collections import defaultdict
 import json
 from typing import Dict, List, Tuple
 
@@ -72,7 +73,10 @@ def preprocess_feature(
 
 
 def preprocess_data(
-    raw_data: pd.DataFrame, params: pd.DataFrame, shuffle_data=True
+    raw_data: pd.DataFrame,
+    reward_function: Dict,
+    experiment_params: Dict,
+    shuffle_data=True,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # start by randomizing the data upfront
@@ -110,11 +114,11 @@ def preprocess_data(
 
     # then add the linear combination of immediate rewards
     for metrics_name, series in immediate_y.iteritems():
-        X["reward"] += series * params["reward_function"][metrics_name]
+        X["reward"] += series * reward_function[metrics_name]
 
     # then add the linear combination of delayed rewards
     for metrics_name, series in delayed_y.iteritems():
-        X["reward"] += series * params["reward_function"][metrics_name]
+        X["reward"] += series * reward_function[metrics_name]
 
     reward_df = X["reward"]
     float_feature_df = pd.DataFrame()
@@ -122,14 +126,22 @@ def preprocess_data(
 
     # order in which to preprocess features
     float_feature_order, id_feature_order = get_preprocess_feature_order(
-        params["features"]
+        experiment_params["features"]
     )
     # final features names after preprocessing & expansion of categoricals
     final_float_feature_order, final_id_feature_order = [], []
 
+    # create product set feature mappings for any product sets
+    id_feature_str_to_int_map = {}
+    for product_set, metadata in experiment_params["product_sets"].items():
+        # index 0 in embedding tables is reserved for null id so + 1 below
+        id_feature_str_to_int_map[product_set] = {
+            v: idx + 1 for idx, v in enumerate(metadata["ids"])
+        }
+
     transforms, imputers = {}, {}
     for feature_name in float_feature_order:
-        meta = params["features"][feature_name]
+        meta = experiment_params["features"][feature_name]
         df, preprocessor, imputer = preprocess_feature(
             feature_name, meta["type"], X[feature_name].values
         )
@@ -139,33 +151,45 @@ def preprocess_data(
         imputers[feature_name] = imputer
 
     for feature_name in id_feature_order:
-        meta = params["features"][feature_name]
+        meta = experiment_params["features"][feature_name]
         products_set_id = meta["product_set_id"]
-        product_set_meta = params["product_sets"][products_set_id]
+        product_set_meta = experiment_params["product_sets"][products_set_id]
 
         if meta["use_dense"] is True and "dense" in product_set_meta:
-            # if dense is true then convert ID's into their dense features
-            dense = np.array(
-                [product_set_meta["dense"][str(int(i))] for i in X[feature_name].values]
-            )
-            for idx, feature in enumerate(product_set_meta["features"]):
-                vals = dense[:, idx]
+
+            dense = defaultdict(list)
+            # TODO: don't like that this is O(n^2), think about better way to do this
+            for val in X[feature_name].values:
+                for idx, feature_spec in enumerate(product_set_meta["features"]):
+                    dense_feature_name = feature_spec["name"]
+                    dense_feature_val = product_set_meta["dense"][val][idx]
+                    dense[dense_feature_name].append(dense_feature_val)
+
+            for idx, feature_spec in enumerate(product_set_meta["features"]):
+                dtype = (
+                    np.dtype(float) if feature_spec["type"] == "N" else np.dtype(object)
+                )
+                vals = np.array(dense[feature_spec["name"]], dtype=dtype)
                 df, preprocessor, imputer = preprocess_feature(
-                    feature["name"], feature["type"], vals
+                    feature_spec["name"], feature_spec["type"], vals
                 )
                 final_float_feature_order.extend(df.columns)
                 float_feature_df = pd.concat([float_feature_df, df], axis=1)
-                transforms[feature["name"]] = preprocessor
-                imputers[feature["name"]] = imputer
+                transforms[feature_spec["name"]] = preprocessor
+                imputers[feature_spec["name"]] = imputer
         else:
-            # sparse id list features aren't preprocessed, instead they use an
-            # embedding table which is built into the pytorch model
-            final_id_feature_order.append(feature_name)
-            id_list_feature_df[feature_name] = pd.Series(X[feature_name].values)
-            transforms[feature_name] = params["features"][feature_name][
+            # sparse id list features need to be converted from string to int,
+            # but aside from that are not imputed or transformed.
+            product_set_id = experiment_params["features"][feature_name][
                 "product_set_id"
             ]
-            imputers[feature_name] = params["features"][feature_name]["product_set_id"]
+            str_to_int_map = id_feature_str_to_int_map[product_set_id]
+            final_id_feature_order.append(feature_name)
+            id_list_feature_df[feature_name] = pd.Series(X[feature_name].values).apply(
+                lambda x: str_to_int_map[x]
+            )
+            transforms[feature_name] = product_set_id
+            imputers[feature_name] = product_set_id
 
     return {
         "y": reward_df,
@@ -173,6 +197,7 @@ def preprocess_data(
         "X_id_list": id_list_feature_df,
         "transforms": transforms,
         "imputers": imputers,
+        "id_feature_str_to_int_map": id_feature_str_to_int_map,
         "float_feature_order": float_feature_order,
         "id_feature_order": id_feature_order,
         "final_float_feature_order": final_float_feature_order,

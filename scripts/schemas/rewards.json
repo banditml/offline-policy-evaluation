@@ -7,7 +7,7 @@
   {
     "mode": "NULLABLE",
     "name": "decision",
-    "type": "INTEGER"
+    "type": "STRING"
   },
   {
     "mode": "NULLABLE",

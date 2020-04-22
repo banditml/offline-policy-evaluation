@@ -22,38 +22,32 @@ DATASET_ID = "gradient_app_staging"
 DECISION_TABLE = "decisions"
 REWARDS_TABLE = "rewards"
 CREDS_PATH = "credentials/bq_creds.json"
-IMMEDIATE_PARTITION = "$20200330"
-DELAYED_PARTITION = "$20200401"
+IMMEDIATE_PARTITION = "$20200420"
+DELAYED_PARTITION = "$20200421"
 
-EXPERIMENT_ID = "test-experiment-height-prediction-v9"
+EXPERIMENT_ID = "test-experiment-height-prediction-v1"
 CURRENT_HEIGHT_DISTRIBUTIONS = {
     "usa": {
-        "id": 1,
         "male": {"mean": 175.3, "stddev": 5},
         "female": {"mean": 161.5, "stddev": 4},
     },
     "china": {
-        "id": 2,
         "male": {"mean": 169.5, "stddev": 4},
         "female": {"mean": 158, "stddev": 3},
     },
     "india": {
-        "id": 3,
         "male": {"mean": 166.3, "stddev": 3},
         "female": {"mean": 158.5, "stddev": 2},
     },
     "serbia": {
-        "id": 4,
         "male": {"mean": 182, "stddev": 5},
         "female": {"mean": 166.8, "stddev": 4},
     },
     "norway": {
-        "id": 5,
         "male": {"mean": 179.7, "stddev": 5},
         "female": {"mean": 167.1, "stddev": 4},
     },
 }
-GENDER_MAP = {"male": 1, "female": 2}
 CURRENT_YEAR = 2020
 YEARLY_MEAN_CM_ADJUSTMENTS = 0.25
 POSSIBLE_YEARS = range(CURRENT_YEAR - 50, CURRENT_YEAR + 1)
@@ -101,9 +95,7 @@ def main(args):
         height = np.random.normal(mu, sigma, 1)[0]
 
         context = {
-            "country": CURRENT_HEIGHT_DISTRIBUTIONS[country][
-                "id"
-            ],  # idlist feature or categorical
+            "country": country,  # idlist feature or categorical
             "year": year,  # numeric feature
         }
 
@@ -122,7 +114,7 @@ def main(args):
             {
                 "decision_id": decision_id,
                 "context": json.dumps(context),
-                "decision": GENDER_MAP[gender],
+                "decision": gender,
                 "experiment_id": EXPERIMENT_ID,
                 "variation_id": random.randint(1, 2),
                 "mdp_id": str(i),
@@ -142,7 +134,7 @@ def main(args):
         immediate_rewards_to_insert.append(
             {
                 "decision_id": decision_id,
-                "decision": GENDER_MAP[gender],
+                "decision": gender,
                 "metrics": json.dumps({"height": height}),
                 "experiment_id": EXPERIMENT_ID,
                 "mdp_id": str(i),
@@ -153,7 +145,7 @@ def main(args):
         # and add end of MDP rewards. in this problem all rewards are immediate
         # so add these as 0's to test the joining logic in training. in practice
         # end of MDP metrics' keys map to previous decisions
-        rand_previous_decision = random.choice(list(GENDER_MAP.values()))
+        rand_previous_decision = random.choice(["male", "female"])
         end_of_mdp_rewards_to_insert.append(
             {
                 "decision_id": None,
@@ -168,17 +160,32 @@ def main(args):
         )
 
     # insert decisions into BQ table
-    client.insert_rows(decision_table_immediate, decisions_to_insert)
+    client.insert_rows(
+        decision_table_immediate,
+        decisions_to_insert,
+        skip_invalid_rows=True,
+        ignore_unknown_values=False,
+    )
     print(f"Successfully inserted {NUM_GET_DECISION_CALLS} decisions.")
 
     # insert immediate rewards into BQ table
-    client.insert_rows(reward_table_immediate, immediate_rewards_to_insert)
+    client.insert_rows(
+        reward_table_immediate,
+        immediate_rewards_to_insert,
+        skip_invalid_rows=True,
+        ignore_unknown_values=False,
+    )
     print(
         f"Successfully inserted {len(immediate_rewards_to_insert)} immediate rewards."
     )
 
     # insert end of MDP rewards into BQ table
-    client.insert_rows(reward_table_delayed, end_of_mdp_rewards_to_insert)
+    client.insert_rows(
+        reward_table_delayed,
+        end_of_mdp_rewards_to_insert,
+        skip_invalid_rows=True,
+        ignore_unknown_values=False,
+    )
     print(
         f"Successfully inserted {len(end_of_mdp_rewards_to_insert)} end of MDP rewards."
     )

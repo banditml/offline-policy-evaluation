@@ -22,8 +22,8 @@ class TestPredictor(unittest.TestCase):
         cls.tol = 0.001
         cls.tmp_net_path = TMP_NET_PATH
         cls.tmp_config_path = TMP_CONFIG_PATH
-        cls.shared_params = deepcopy(Params.SHARED_PARAMS)
-        cls.shared_params["max_epochs"] = 10
+        cls.ml_params = deepcopy(Params.ML_PARAMS)
+        cls.ml_params["max_epochs"] = 10
 
     @classmethod
     def tearDownClass(cls):
@@ -37,6 +37,7 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
+            self.ml_params["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
@@ -61,15 +62,18 @@ class TestPredictor(unittest.TestCase):
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_CATEG["final_id_feature_order"],
-            layers=self.shared_params["model"]["layers"],
-            activations=self.shared_params["model"]["activations"],
+            layers=self.ml_params["model"]["layers"],
+            activations=self.ml_params["model"]["activations"],
             input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_CATEG),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_specific_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
             float_feature_order=Datasets.DATA_COUNTRY_CATEG["float_feature_order"],
             id_feature_order=Datasets.DATA_COUNTRY_CATEG["id_feature_order"],
+            id_feature_str_to_int_map=Datasets.DATA_COUNTRY_CATEG[
+                "id_feature_str_to_int_map"
+            ],
             transforms=Datasets.DATA_COUNTRY_CATEG["transforms"],
             imputers=Datasets.DATA_COUNTRY_CATEG["imputers"],
             net=pytorch_net,
@@ -80,7 +84,7 @@ class TestPredictor(unittest.TestCase):
             module=pre_serialized_predictor.net,
             X=X_COUNTRY_CATEG["X_train"],
             y=X_COUNTRY_CATEG["y_train"],
-            hyperparams=self.shared_params,
+            hyperparams=self.ml_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)
@@ -103,6 +107,7 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
+            self.ml_params["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST,
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
@@ -134,15 +139,18 @@ class TestPredictor(unittest.TestCase):
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_ID_LIST["final_id_feature_order"],
-            layers=self.shared_params["model"]["layers"],
-            activations=self.shared_params["model"]["activations"],
+            layers=self.ml_params["model"]["layers"],
+            activations=self.ml_params["model"]["activations"],
             input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_ID_LIST),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_specific_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST,
+            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST,
             float_feature_order=Datasets.DATA_COUNTRY_ID_LIST["float_feature_order"],
             id_feature_order=Datasets.DATA_COUNTRY_ID_LIST["id_feature_order"],
+            id_feature_str_to_int_map=Datasets.DATA_COUNTRY_ID_LIST[
+                "id_feature_str_to_int_map"
+            ],
             transforms=Datasets.DATA_COUNTRY_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_ID_LIST["imputers"],
             net=pytorch_net,
@@ -153,7 +161,7 @@ class TestPredictor(unittest.TestCase):
             module=pre_serialized_predictor.net,
             X=X_COUNTRY_ID_LIST["X_train"],
             y=X_COUNTRY_ID_LIST["y_train"],
-            hyperparams=self.shared_params,
+            hyperparams=self.ml_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)
@@ -176,6 +184,7 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
+            self.ml_params["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST,
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
@@ -201,17 +210,20 @@ class TestPredictor(unittest.TestCase):
             id_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
                 "final_id_feature_order"
             ],
-            layers=self.shared_params["model"]["layers"],
-            activations=self.shared_params["model"]["activations"],
+            layers=self.ml_params["model"]["layers"],
+            activations=self.ml_params["model"]["activations"],
             input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_DENSE_ID_LIST),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_specific_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST,
+            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST,
             float_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
                 "float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST["id_feature_order"],
+            id_feature_str_to_int_map=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
+                "id_feature_str_to_int_map"
+            ],
             transforms=Datasets.DATA_COUNTRY_DENSE_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_DENSE_ID_LIST["imputers"],
             net=pytorch_net,
@@ -222,7 +234,7 @@ class TestPredictor(unittest.TestCase):
             module=pre_serialized_predictor.net,
             X=X_COUNTRY_DENSE_ID_LIST["X_train"],
             y=X_COUNTRY_DENSE_ID_LIST["y_train"],
-            hyperparams=self.shared_params,
+            hyperparams=self.ml_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)
@@ -245,6 +257,7 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
+            self.ml_params["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST,
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
@@ -278,20 +291,23 @@ class TestPredictor(unittest.TestCase):
             id_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
                 "final_id_feature_order"
             ],
-            layers=self.shared_params["model"]["layers"],
-            activations=self.shared_params["model"]["activations"],
+            layers=self.ml_params["model"]["layers"],
+            activations=self.ml_params["model"]["activations"],
             input_dim=train_bandit.num_float_dim(
                 Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST
             ),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_specific_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST,
+            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST,
             float_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
                 "float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
                 "id_feature_order"
+            ],
+            id_feature_str_to_int_map=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
+                "id_feature_str_to_int_map"
             ],
             transforms=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["imputers"],
@@ -303,7 +319,7 @@ class TestPredictor(unittest.TestCase):
             module=pre_serialized_predictor.net,
             X=X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
             y=X_COUNTRY_AND_DECISION_ID_LIST["y_train"],
-            hyperparams=self.shared_params,
+            hyperparams=self.ml_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)

@@ -4,7 +4,7 @@ to make one off predictions.
 
 Usage:
     python -m workflows.predict \
-    	--predictor_dir trained_models/test-experiment-height-prediction-v8 \
+    	--predictor_dir trained_models/test-experiment-height-prediction-v1 \
         --model_name model_v1 \
         --get_ucb_scores
 """
@@ -51,7 +51,7 @@ def main(args):
     net_path = f"{args.predictor_dir}/{args.model_name}.pt"
     predictor = BanditPredictor.predictor_from_file(config_path, net_path)
 
-    json_input = json.dumps({"year": 2019, "country": 4})
+    json_input = json.dumps({"year": 2019, "country": "serbia"})
 
     start = time.time()
     decisions = get_decisions(json_input, predictor, args.get_ucb_scores)

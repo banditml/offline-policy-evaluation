@@ -14,8 +14,10 @@ class BigQueryReader:
     def __init__(
         self,
         credential_path: Optional[str],
-        decisions_table_name: str,
-        rewards_table_name: str,
+        bq_project: str,
+        bq_dataset: str,
+        decisions_table: str,
+        rewards_table: str,
         decisions_ds_start: str,
         decisions_ds_end: str,
         rewards_ds_end: str,
@@ -30,9 +32,10 @@ class BigQueryReader:
         else:
             credentials = None
             project_id = None
+
         self.client = bigquery.Client(credentials=credentials, project=project_id)
-        self.decisions_table_name = decisions_table_name
-        self.rewards_table_name = rewards_table_name
+        self.decisions_table_name = f"{bq_project}.{bq_dataset}.{decisions_table}"
+        self.rewards_table_name = f"{bq_project}.{bq_dataset}.{rewards_table}"
         self.decisions_ds_start = decisions_ds_start
         self.decisions_ds_end = decisions_ds_end
         self.rewards_ds_end = rewards_ds_end
