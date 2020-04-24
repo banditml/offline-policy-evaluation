@@ -115,6 +115,7 @@ def train(
     logger.info(f"Got {len(raw_data)} rows of training data.")
     logger.info(raw_data.head())
 
+    logger.info("Kicking off data preprocessing...")
     data = preprocessor.preprocess_data(
         raw_data, ml_params["data_reader"]["reward_function"], experiment_params
     )
@@ -194,10 +195,6 @@ def main(args):
         )
         logger.info("Getting experiment config from banditml.com...")
         experiment_params = get_experiment_config_from_bandit_app(args.experiment_id)
-        # in transit this gets dumped as a string so load it
-        experiment_params["reward_function"] = json.loads(
-            experiment_params["reward_function"]
-        )
         experiment_params["experiment_id"] = args.experiment_id
         experiment_params["model_name"] = args.model_name
 

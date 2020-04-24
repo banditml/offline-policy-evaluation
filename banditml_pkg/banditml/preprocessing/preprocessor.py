@@ -9,6 +9,11 @@ from sklearn.impute import SimpleImputer
 from sklearn.utils import shuffle
 import torch
 from torch.nn.utils.rnn import pad_sequence
+from utils.utils import get_logger
+
+logger = get_logger(__name__)
+
+MISSING_CATEGORICAL_CATEGORY = "null"
 
 
 def get_preprocess_feature_order(features_spec: Dict) -> List[str]:
@@ -54,16 +59,19 @@ def preprocess_feature(
         # http://rajeshmahajan.com/standard-scaler-v-min-max-scaler-machine-learning/
         imputer = SimpleImputer(strategy="mean")
         values = imputer.fit_transform(values)
+        min_val, max_val = np.min(values), np.max(values)
+        logger.info(f"{feature_name} [{feature_type}]: [{min_val}, {max_val}]")
         preprocessor = preprocessing.StandardScaler()
         values = preprocessor.fit_transform(values)
         df = pd.DataFrame(values.squeeze(), columns=[feature_name])
     elif feature_type == "C":
-        imputer = SimpleImputer(strategy="most_frequent")
-        values = imputer.fit_transform(values)
+        imputer = None
+        possible_values = set(values.squeeze().tolist())
+        logger.info(f"{feature_name} [{feature_type}]: {possible_values}")
         preprocessor = preprocessing.OneHotEncoder(sparse=False)
         values = preprocessor.fit_transform(values)
         preprocessor.col_names = [
-            feature_name + "_" + str(i) for i in preprocessor.categories_[0]
+            feature_name + "_" + i for i in preprocessor.categories_[0]
         ]
         df = pd.DataFrame(values.squeeze(), columns=preprocessor.col_names)
     else:
@@ -124,6 +132,16 @@ def preprocess_data(
     float_feature_df = pd.DataFrame()
     id_list_feature_df = pd.DataFrame()
 
+    # output how sparse the reward is to help user during training
+    total_rows = len(X)
+    non_zero_reward_rows = sum(X["reward"] != 0)
+    percent_non_zero = round(non_zero_reward_rows / total_rows * 100, 2)
+    logger.info(
+        f"{non_zero_reward_rows} of {total_rows} rows have non-zero reward "
+        f"({percent_non_zero}%)"
+    )
+    logger.info(f"Reward range: [{min(X['reward'])}, {max(X['reward'])}]")
+
     # order in which to preprocess features
     float_feature_order, id_feature_order = get_preprocess_feature_order(
         experiment_params["features"]
@@ -142,6 +160,12 @@ def preprocess_data(
     transforms, imputers = {}, {}
     for feature_name in float_feature_order:
         meta = experiment_params["features"][feature_name]
+
+        # rather than using a `most_frequent` imputation for categorical features, I
+        # think just adding another category of "null" is actually a better idea.
+        if meta["type"] == "C":
+            X[feature_name].fillna(value=MISSING_CATEGORICAL_CATEGORY, inplace=True)
+
         df, preprocessor, imputer = preprocess_feature(
             feature_name, meta["type"], X[feature_name].values
         )
@@ -154,6 +178,7 @@ def preprocess_data(
         meta = experiment_params["features"][feature_name]
         products_set_id = meta["product_set_id"]
         product_set_meta = experiment_params["product_sets"][products_set_id]
+        logger.info(f"{feature_name} [{meta['type']}]")
 
         if meta["use_dense"] is True and "dense" in product_set_meta:
 
@@ -169,7 +194,15 @@ def preprocess_data(
                 dtype = (
                     np.dtype(float) if feature_spec["type"] == "N" else np.dtype(object)
                 )
-                vals = np.array(dense[feature_spec["name"]], dtype=dtype)
+
+                vals = dense[feature_spec["name"]]
+                if feature_spec["type"] == "C":
+                    # fill in null categorical values with a "null" category
+                    vals = [
+                        MISSING_CATEGORICAL_CATEGORY if v is None else v for v in vals
+                    ]
+
+                vals = np.array(vals, dtype=dtype)
                 df, preprocessor, imputer = preprocess_feature(
                     feature_spec["name"], feature_spec["type"], vals
                 )
@@ -188,8 +221,8 @@ def preprocess_data(
             id_list_feature_df[feature_name] = pd.Series(X[feature_name].values).apply(
                 lambda x: str_to_int_map[x]
             )
-            transforms[feature_name] = product_set_id
-            imputers[feature_name] = product_set_id
+            transforms[feature_name] = None
+            imputers[feature_name] = None
 
     return {
         "y": reward_df,

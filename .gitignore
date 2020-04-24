@@ -4,6 +4,11 @@ credentials/*
 ## Trained model files
 trained_models/*
 
+## ignore all configs in /configs except examples
+configs/*
+!configs/example_exp_config.json
+!configs/example_ml_config.json
+
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
