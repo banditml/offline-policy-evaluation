@@ -179,7 +179,10 @@ class BanditPredictor:
 
         # write the parameters of the feature transformers
         for feature_name, transform in self.transforms.items():
-            if isinstance(transform, preprocessing.StandardScaler):
+            if transform is None:
+                # id lists don't have transforms
+                spec = None
+            elif isinstance(transform, preprocessing.StandardScaler):
                 spec = {
                     "name": "StandardScaler",
                     "mean": transform.mean_.tolist(),
@@ -192,9 +195,6 @@ class BanditPredictor:
                     "categories": [transform.categories_[0].tolist()],
                     "sparse": transform.sparse,
                 }
-            elif isinstance(transform, str):
-                # id lists don't have transforms
-                spec = None
             else:
                 raise Exception(
                     f"Don't know how to serialize preprocessor of type {type(transform)}"
@@ -203,8 +203,8 @@ class BanditPredictor:
 
         # write the parameters of the feature imputers
         for feature_name, imputer in self.imputers.items():
-            if isinstance(imputer, str):
-                # id lists don't have imputers
+            if imputer is None:
+                # categorical & id lists don't have imputers
                 spec = None
             else:
                 spec = {
@@ -251,7 +251,7 @@ class BanditPredictor:
         imputers = {}
         for feature_name, imputer_spec in config_dict["imputers"].items():
             if imputer_spec is None:
-                # id lists don't have imputers
+                # categoricals & id lists don't have imputers
                 imputer = None
             else:
                 imputer = SimpleImputer()
