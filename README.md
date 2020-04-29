@@ -23,13 +23,18 @@ This repo holds the open source machine learning code that powers [banditml.com]
 ## Supported models
 
 Models supported:
-- [ ] Gradient boosted decision tree contextual bandit with ε-greedy exploration (for small data problems)
-- [x] Neural contextual bandit with ε-greedy exploration
-- [x] Neural contextual bandit with UCB-based exploration [(via. dropout exploration)](https://arxiv.org/abs/1506.02142)
-- [ ] Neural contextual bandit with UCB-based exploration [(via. mixture density networks)](https://publications.aston.ac.uk/id/eprint/373/1/NCRG_94_004.pdf)
-- [ ] [Deep Q-learning with ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
-- [ ] [Quantile regression DQN with ε-greedy exploration](https://arxiv.org/abs/1710.10044)
-- [ ] [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
+
+- Contextual Bandits (small datasets)
+  - [ ] Random forest bandit w/ ε-greedy exploration
+  - [ ] Gradient boosted decision tree bandit w/ ε-greedy exploration
+- Contextual Bandits (medium datasets)
+  - [x] Neural bandit with ε-greedy exploration
+  - [x] Neural bandit with UCB-based exploration [(via. dropout exploration)](https://arxiv.org/abs/1506.02142)
+  - [ ] Neural bandit with UCB-based exploration [(via. mixture density networks)](https://publications.aston.ac.uk/id/eprint/373/1/NCRG_94_004.pdf)
+- Reinforcement Learning (large datasets)
+  - [ ] [Deep Q-learning with ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
+  - [ ] [Quantile regression DQN with ε-greedy exploration](https://arxiv.org/abs/1710.10044)
+  - [ ] [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
 
 <b>4</b> feature types supported:
 * <b>Numeric:</b> standard floating point features
