@@ -1,0 +1,47 @@
+from banditml_pkg.banditml.models.embed_dnn import build_embedding_spec, EmbedDnn
+
+
+def build_pytorch_net(
+    feature_specs,
+    product_sets,
+    float_feature_order,
+    id_feature_order,
+    reward_type,
+    layers,
+    activations,
+    input_dim,
+    dropout_ratio=0.0,
+):
+    """Build PyTorch model that will be fed into skorch training."""
+
+    is_classification = reward_type == "binary"
+    output_dim = 2 if is_classification else 1
+
+    layers[0], layers[-1] = input_dim, output_dim
+
+    # handle changes of model architecture due to embeddings
+    first_layer_dim_increase, embedding_info = build_embedding_spec(
+        id_feature_order, feature_specs, product_sets
+    )
+    layers[0] += first_layer_dim_increase
+
+    net_spec = {
+        "layers": layers,
+        "activations": activations,
+        "dropout_ratio": dropout_ratio,
+        "feature_specs": feature_specs,
+        "product_sets": product_sets,
+        "float_feature_order": float_feature_order,
+        "id_feature_order": id_feature_order,
+        "embedding_info": embedding_info,
+        "is_classification": is_classification,
+    }
+    return net_spec, EmbedDnn(**net_spec)
+
+
+def build_gbdt():
+    pass
+
+
+def build_random_forest():
+    pass

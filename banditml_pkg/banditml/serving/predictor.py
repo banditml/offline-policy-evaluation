@@ -24,6 +24,7 @@ class BanditPredictor:
         transforms,
         imputers,
         net,
+        reward_type,
         net_spec=None,
     ):
         self.experiment_params = experiment_params
@@ -33,6 +34,7 @@ class BanditPredictor:
         self.transforms = transforms
         self.imputers = imputers
         self.net = net
+        self.reward_type = reward_type
         self.net_spec = net_spec
 
         # the ordered decisions that we need to score over.
@@ -133,6 +135,11 @@ class BanditPredictor:
 
         with torch.no_grad():
             scores = self.net.forward(**pytorch_input)
+
+            # for binary classification we just need the score for the `1` label
+            if self.reward_type == "binary":
+                scores = scores[:, 1:]
+
             ucb_scores = []
 
             if get_ucb_scores:
@@ -173,6 +180,7 @@ class BanditPredictor:
             "float_feature_order": self.float_feature_order,
             "id_feature_order": self.id_feature_order,
             "id_feature_str_to_int_map": self.id_feature_str_to_int_map,
+            "reward_type": self.reward_type,
             "transforms": {},
             "imputers": {},
         }
@@ -267,5 +275,6 @@ class BanditPredictor:
             transforms=transforms,
             imputers=imputers,
             net=net,
+            reward_type=config_dict["reward_type"],
             net_spec=config_dict["net_spec"],
         )
