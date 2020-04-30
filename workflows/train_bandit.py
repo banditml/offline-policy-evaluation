@@ -15,76 +15,17 @@ import shutil
 import sys
 from typing import Dict
 
-from skorch import NeuralNetRegressor
-import torch
-
 import boto3
 from data_reader.bandit_reader import BigQueryReader
 from banditml_pkg.banditml.preprocessing import preprocessor
-from banditml_pkg.banditml.models.embed_dnn import build_embedding_spec, EmbedDnn
 from banditml_pkg.banditml.serving.predictor import BanditPredictor
-from utils.utils import (
-    get_logger,
-    fancy_print,
-    read_config,
-    get_experiment_config_from_bandit_app,
-)
+from utils import model_constructors, model_trainers, utils
 
-logger = get_logger(__name__)
-
-
-def build_pytorch_net(
-    feature_specs,
-    product_sets,
-    float_feature_order,
-    layers,
-    id_feature_order,
-    activations,
-    input_dim,
-    output_dim=1,
-    dropout_ratio=0.0,
-):
-    """Build PyTorch model that will be fed into skorch training."""
-    layers[0], layers[-1] = input_dim, output_dim
-
-    # handle changes of model architecture due to embeddings
-    first_layer_dim_increase, embedding_info = build_embedding_spec(
-        id_feature_order, feature_specs, product_sets
-    )
-    layers[0] += first_layer_dim_increase
-
-    net_spec = {
-        "layers": layers,
-        "activations": activations,
-        "dropout_ratio": dropout_ratio,
-        "feature_specs": feature_specs,
-        "product_sets": product_sets,
-        "float_feature_order": float_feature_order,
-        "id_feature_order": id_feature_order,
-        "embedding_info": embedding_info,
-    }
-    return net_spec, EmbedDnn(**net_spec)
+logger = utils.get_logger(__name__)
 
 
 def num_float_dim(data):
     return len(data["X_float"].columns)
-
-
-def fit_custom_pytorch_module_w_skorch(module, X, y, hyperparams):
-    """Fit a custom PyTorch module using Skorch."""
-
-    skorch_net = NeuralNetRegressor(
-        module=module,
-        optimizer=torch.optim.Adam,
-        lr=hyperparams["learning_rate"],
-        optimizer__weight_decay=hyperparams["l2_decay"],
-        max_epochs=hyperparams["max_epochs"],
-        batch_size=hyperparams["batch_size"],
-        iterator_train__shuffle=True,
-    )
-
-    skorch_net.fit(X, y)
-    return skorch_net
 
 
 def train(
@@ -109,6 +50,7 @@ def train(
     )
 
     raw_data = data_reader.get_training_data()
+
     if len(raw_data) == 0:
         logger.error(f"Got no raws of training data. Training aborted.")
         sys.exit()
@@ -121,20 +63,30 @@ def train(
     )
     X, y = preprocessor.data_to_pytorch(data)
 
-    net_spec, pytorch_net = build_pytorch_net(
-        feature_specs=experiment_params["features"],
-        product_sets=experiment_params["product_sets"],
-        float_feature_order=data["final_float_feature_order"],
-        id_feature_order=data["final_id_feature_order"],
-        layers=ml_params["model"]["layers"],
-        activations=ml_params["model"]["activations"],
-        dropout_ratio=ml_params["model"]["dropout_ratio"],
-        input_dim=num_float_dim(data),
-    )
-    logger.info(f"Initialized model: {pytorch_net}")
+    model_type = ml_params["model_type"]
+    model_params = ml_params["model_params"][model_type]
+    reward_type = ml_params["reward_type"]
 
-    logger.info(f"Starting training: {ml_params['max_epochs']} epochs")
+    # build the model
+    if model_type == "neural_bandit":
+        net_spec, pytorch_net = model_constructors.build_pytorch_net(
+            feature_specs=experiment_params["features"],
+            product_sets=experiment_params["product_sets"],
+            float_feature_order=data["final_float_feature_order"],
+            id_feature_order=data["final_id_feature_order"],
+            reward_type=reward_type,
+            layers=model_params["layers"],
+            activations=model_params["activations"],
+            dropout_ratio=model_params["dropout_ratio"],
+            input_dim=num_float_dim(data),
+        )
+        logger.info(f"Initialized model: {pytorch_net}")
+    elif model_type == "gbdt_bandit":
+        pass
+    elif model_type == "random_forest_bandit":
+        pass
 
+    # build the predictor
     predictor = BanditPredictor(
         experiment_params=experiment_params,
         float_feature_order=data["float_feature_order"],
@@ -143,12 +95,24 @@ def train(
         transforms=data["transforms"],
         imputers=data["imputers"],
         net=pytorch_net,
+        reward_type=reward_type,
         net_spec=net_spec,
     )
 
-    skorch_net = fit_custom_pytorch_module_w_skorch(
-        module=predictor.net, X=X, y=y, hyperparams=ml_params
-    )
+    # train the model
+    if model_type == "neural_bandit":
+        logger.info(f"Starting training: {model_params} epochs")
+        skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
+            reward_type=reward_type,
+            module=predictor.net,
+            X=X,
+            y=y,
+            hyperparams=model_params,
+        )
+    elif model_type == "gbdt_bandit":
+        pass
+    elif model_type == "random_forest_bandit":
+        pass
 
     if predictor_save_dir is not None:
         logger.info("Saving predictor artifacts to disk...")
@@ -183,18 +147,21 @@ def train(
 
 def main(args):
     start = time.time()
-    fancy_print("Starting workflow", color="green", size=70)
-    ml_params = read_config(args.ml_config_path)
+    utils.fancy_print("Starting workflow", color="green", size=70)
+    ml_params = utils.read_config(args.ml_config_path)
+    utils.validate_ml_params(ml_params)
 
     if args.experiment_config_path:
-        experiment_params = read_config(args.experiment_config_path)
+        experiment_params = utils.read_config(args.experiment_config_path)
     else:
         assert args.experiment_id is not None, (
             "If no --experiment_config_path provided, --experiment_id must"
             " be provided to fetch experiment config from bandit app."
         )
         logger.info("Getting experiment config from banditml.com...")
-        experiment_params = get_experiment_config_from_bandit_app(args.experiment_id)
+        experiment_params = utils.get_experiment_config_from_bandit_app(
+            args.experiment_id
+        )
         experiment_params["experiment_id"] = args.experiment_id
         experiment_params["model_name"] = args.model_name
 

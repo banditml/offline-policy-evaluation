@@ -49,6 +49,7 @@ class EmbedDnn(nn.Module):
         float_feature_order=[],
         id_feature_order=[],
         embedding_info={},
+        is_classification=False,
     ) -> None:
         super().__init__()
         self.layers: nn.ModuleList = nn.ModuleList()
@@ -65,6 +66,7 @@ class EmbedDnn(nn.Module):
         self.embeddings = nn.ModuleList()
         self.embeddings_idx_map = {}
         self.net_spec = {}
+        self.is_classification = is_classification
 
         assert len(layers) >= 2, "Invalid layer schema {} for network".format(layers)
 
@@ -148,4 +150,8 @@ class EmbedDnn(nn.Module):
                 x = getattr(F, activation)(x)
             if self.use_dropout and i < len(self.dropout_layers):
                 x = self.dropout_layers[i](x)
+
+        if self.is_classification:
+            x = F.softmax(x, dim=1)
+
         return x

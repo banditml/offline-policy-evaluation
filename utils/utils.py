@@ -1,11 +1,20 @@
 import json
 import logging
 import math
+from typing import Dict, NoReturn
 
 import requests
 
 BANDIT_APP_CREDS_PATH = "credentials/bandit_app_creds.json"
 BANDIT_APP_EXP_CONFIG_URL = "https://www.banditml.com/api/exp_config"
+VALID_MODEL_TYPES = (
+    "neural_bandit",
+    "random_forest_bandit",
+    "gbdt_bandit",
+    "dqn",
+    "qr_dqn",
+)
+VALID_REWARD_TYPES = ("continuous", "binary")
 
 
 def read_config(config_path):
@@ -60,3 +69,21 @@ def get_experiment_config_from_bandit_app(experiment_id):
         )
 
     return response.json()
+
+
+def validate_ml_params(ml_params: Dict) -> NoReturn:
+    assert "model_type" in ml_params
+    assert "model_params" in ml_params
+    assert "reward_type" in ml_params
+
+    model_type = ml_params["model_type"]
+    model_params = ml_params["model_params"]
+    reward_type = ml_params["reward_type"]
+
+    assert (
+        model_type in VALID_MODEL_TYPES
+    ), f"Model type {model_type} not supported. Valid model types are {VALID_MODEL_TYPES}"
+    assert model_type in model_params
+    assert (
+        reward_type in VALID_REWARD_TYPES
+    ), f"Reward type {reward_type} not supported. Valid reward types are {VALID_REWARD_TYPES}"

@@ -63,22 +63,30 @@ class Params:
 
     ML_PARAMS = {
         "data_reader": {"reward_function": {"height": 1, "nameOfADelayedReward": 1}},
-        "max_epochs": 50,
-        "learning_rate": 0.002,
-        "l2_decay": 0.0003,
-        "batch_size": 64,
-        "model": {
-            "layers": [-1, 32, 16, -1],
-            "activations": ["relu", "relu", "linear"],
-            "dropout_ratio": 0.00,
+        "reward_type": "regression",
+        "model_type": "neural_bandit",
+        "model_params": {
+            "neural_bandit": {
+                "max_epochs": 50,
+                "learning_rate": 0.002,
+                "l2_decay": 0.0003,
+                "batch_size": 64,
+                "layers": [-1, 32, 16, -1],
+                "activations": ["relu", "relu", "linear"],
+                "dropout_ratio": 0.00,
+            }
         },
         "train_test_split": 0.8,
     }
+
+    REWARD_FUNCTION_BINARY = {"taller_than_165": 1, "nameOfADelayedReward": 0}
 
 
 class Datasets:
     TEST_DIR = os.path.dirname(os.path.abspath(__file__))
     TEST_DATASET_DIR = "datasets"
+
+    # continuous reward
     TEST_DATASET_FILENAME = "height_dataset.csv"
     DATASET_PATH = os.path.join(TEST_DIR, TEST_DATASET_DIR, TEST_DATASET_FILENAME)
 
@@ -155,4 +163,31 @@ class Datasets:
             "X_id_list_idxs": _X["X_id_list_idxs"][_offset:],
         },
         "y_test": _y[_offset:],
+    }
+
+    # binary reward
+    TEST_BINARY_REWARD_DATASET_FILENAME = "height_dataset_binary.csv"
+    BINARY_REWARD_DATASET_PATH = os.path.join(
+        TEST_DIR, TEST_DATASET_DIR, TEST_BINARY_REWARD_DATASET_FILENAME
+    )
+
+    _raw_data_binary_reward = pd.read_csv(BINARY_REWARD_DATASET_PATH)
+    _offset_binary_reward = int(
+        len(_raw_data_binary_reward) * Params.ML_PARAMS["train_test_split"]
+    )
+
+    # dataset for country as categorical variable & binary reward
+    DATA_COUNTRY_CATEG_BINARY_REWARD = preprocessor.preprocess_data(
+        _raw_data_binary_reward,
+        Params.REWARD_FUNCTION_BINARY,
+        Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+    )
+    _X_binary_reward, _y_binary_reward = preprocessor.data_to_pytorch(
+        DATA_COUNTRY_CATEG_BINARY_REWARD
+    )
+    X_COUNTRY_CATEG_BINARY_REWARD = {
+        "X_train": {"X_float": _X_binary_reward["X_float"][:_offset_binary_reward]},
+        "y_train": _y_binary_reward[:_offset_binary_reward],
+        "X_test": {"X_float": _X_binary_reward["X_float"][_offset_binary_reward:]},
+        "y_test": _y_binary_reward[_offset_binary_reward:],
     }
