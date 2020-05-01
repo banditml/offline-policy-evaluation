@@ -23,9 +23,9 @@ class BanditPredictor:
         id_feature_str_to_int_map,
         transforms,
         imputers,
-        net,
+        model,
         reward_type,
-        net_spec=None,
+        model_spec=None,
     ):
         self.experiment_params = experiment_params
         self.float_feature_order = float_feature_order
@@ -33,9 +33,9 @@ class BanditPredictor:
         self.id_feature_str_to_int_map = id_feature_str_to_int_map
         self.transforms = transforms
         self.imputers = imputers
-        self.net = net
+        self.model = model
         self.reward_type = reward_type
-        self.net_spec = net_spec
+        self.model_spec = model_spec
 
         # the ordered decisions that we need to score over.
         self.decisions = []
@@ -134,7 +134,7 @@ class BanditPredictor:
         pytorch_input = self.preprocessed_input_to_pytorch(input)
 
         with torch.no_grad():
-            scores = self.net.forward(**pytorch_input)
+            scores = self.model.forward(**pytorch_input)
 
             # for binary classification we just need the score for the `1` label
             if self.reward_type == "binary":
@@ -144,12 +144,12 @@ class BanditPredictor:
 
             if get_ucb_scores:
                 assert (
-                    self.net.use_dropout is True
+                    self.model.use_dropout is True
                 ), "Can only get UCB scores if model was trained with dropout."
-                self.net.train()
+                self.model.train()
                 scores_samples = torch.tensor(
                     [
-                        self.net.forward(**pytorch_input).numpy()
+                        self.model.forward(**pytorch_input).numpy()
                         for i in range(self.num_times_to_score)
                     ]
                 )
@@ -161,12 +161,12 @@ class BanditPredictor:
             "ucb_scores": ucb_scores,
         }
 
-    def net_to_file(self, path):
+    def model_to_file(self, path):
         """
         Writing a Predictor object to file requires two files. This method
         writes the PyTorch net to file using PyTorch's built in serialization.
         """
-        torch.save(self.net.state_dict(), path)
+        torch.save(self.model.state_dict(), path)
 
     def config_to_file(self, path):
         """
@@ -175,7 +175,7 @@ class BanditPredictor:
         objects/logic to a JSON file.
         """
         output = {
-            "net_spec": self.net_spec,
+            "model_spec": self.model_spec,
             "experiment_params": self.experiment_params,
             "float_feature_order": self.float_feature_order,
             "id_feature_order": self.id_feature_order,
@@ -230,7 +230,7 @@ class BanditPredictor:
             config_dict = json.load(f)
 
         # initialize the pytorch model and put it in `eval` mode
-        net = embed_dnn.EmbedDnn(**config_dict["net_spec"])
+        net = embed_dnn.EmbedDnn(**config_dict["model_spec"])
         net.load_state_dict(torch.load(net_path))
         net.eval()
 
@@ -274,7 +274,7 @@ class BanditPredictor:
             id_feature_str_to_int_map=config_dict["id_feature_str_to_int_map"],
             transforms=transforms,
             imputers=imputers,
-            net=net,
+            model=net,
             reward_type=config_dict["reward_type"],
-            net_spec=config_dict["net_spec"],
+            model_spec=config_dict["model_spec"],
         )

@@ -50,6 +50,19 @@ def fancy_print(text: str, color="blue", size=60):
     print(f"{ansi_color}\n{border}\n{message}\n{border}\n{end_color}")
 
 
+def color_text(text: str, color="blue"):
+    ansi_color = "\033[94m"
+    if color == "green":
+        ansi_color = "\033[95m"
+    elif color == "blue":
+        ansi_color = "\033[94m"
+    else:
+        raise Exception(f"Color {color} not supported")
+
+    end_color = "\033[0m"
+    return f"{ansi_color}{text}{end_color}"
+
+
 def get_experiment_config_from_bandit_app(experiment_id):
     with open(BANDIT_APP_CREDS_PATH) as json_file:
         creds = json.load(json_file)
@@ -87,3 +100,11 @@ def validate_ml_params(ml_params: Dict) -> NoReturn:
     assert (
         reward_type in VALID_REWARD_TYPES
     ), f"Reward type {reward_type} not supported. Valid reward types are {VALID_REWARD_TYPES}"
+
+
+def pset_features_have_dense(features: Dict) -> NoReturn:
+    for feature, meta in features.items():
+        if meta["type"] == "P":
+            if not meta["use_dense"]:
+                return False
+    return True

@@ -36,15 +36,23 @@ def fit_sklearn_gbdt_regression(X_train, y_train, X_test, y_test, hyperparams):
     """Fit an off the shelf sklearn GBDT regressor. Used to validate that our
     models are compeitive."""
 
-    params = {
-        "n_estimators": 500,
-        "max_depth": 4,
-        "min_samples_split": 2,
-        "learning_rate": 0.01,
-        "loss": "ls",
-    }
+    params = {"n_estimators": 200, "max_depth": 3, "learning_rate": 0.01}
 
     clf = ensemble.GradientBoostingRegressor(**params)
+    clf.fit(X_train, y_train)
+
+    mse_train = mean_squared_error(y_train, clf.predict(X_train))
+    mse_test = mean_squared_error(y_test, clf.predict(X_test))
+    return {"model": clf, "mse_train": mse_train, "mse_test": mse_test}
+
+
+def fit_sklearn_rf_regression(X_train, y_train, X_test, y_test, hyperparams):
+    """Fit an off the shelf sklearn random forest regressor. Used to validate that our
+    models are compeitive."""
+
+    params = {"n_estimators": 100, "max_depth": 3}
+
+    clf = ensemble.RandomForestRegressor(**params)
     clf.fit(X_train, y_train)
 
     mse_train = mean_squared_error(y_train, clf.predict(X_train))
@@ -56,7 +64,9 @@ def fit_sklearn_gbdt_classification(X_train, y_train, X_test, y_test, hyperparam
     """Fit an off the shelf sklearn GBDT classifier. Used to validate that our
     models are compeitive."""
 
-    clf = ensemble.GradientBoostingClassifier()
+    params = {"n_estimators": 200, "max_depth": 3, "learning_rate": 0.01}
+
+    clf = ensemble.GradientBoostingClassifier(**params)
     clf.fit(X_train, y_train)
 
     acc_train = accuracy_score(y_train, clf.predict(X_train))

@@ -54,7 +54,7 @@ class TestPredictor(unittest.TestCase):
             "y_test": _y[Datasets._offset :],
         }
 
-        net_spec, pytorch_net = model_constructors.build_pytorch_net(
+        model_spec, pytorch_net = model_constructors.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
                 "features"
             ],
@@ -80,21 +80,21 @@ class TestPredictor(unittest.TestCase):
             ],
             transforms=Datasets.DATA_COUNTRY_CATEG["transforms"],
             imputers=Datasets.DATA_COUNTRY_CATEG["imputers"],
-            net=pytorch_net,
+            model=pytorch_net,
             reward_type=Params.ML_PARAMS["reward_type"],
-            net_spec=net_spec,
+            model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=Params.ML_PARAMS["reward_type"],
-            module=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.net,
             X=X_COUNTRY_CATEG["X_train"],
             y=X_COUNTRY_CATEG["y_train"],
             hyperparams=self.model_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)
-        pre_serialized_predictor.net_to_file(self.tmp_net_path)
+        pre_serialized_predictor.model_to_file(self.tmp_net_path)
 
         post_serialized_predictor = BanditPredictor.predictor_from_file(
             self.tmp_config_path, self.tmp_net_path
@@ -134,7 +134,7 @@ class TestPredictor(unittest.TestCase):
             "y_test": _y[Datasets._offset :],
         }
 
-        net_spec, pytorch_net = model_constructors.build_pytorch_net(
+        model_spec, pytorch_net = model_constructors.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST[
                 "features"
             ],
@@ -160,21 +160,21 @@ class TestPredictor(unittest.TestCase):
             ],
             transforms=Datasets.DATA_COUNTRY_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_ID_LIST["imputers"],
-            net=pytorch_net,
+            model=pytorch_net,
             reward_type=Params.ML_PARAMS["reward_type"],
-            net_spec=net_spec,
+            model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=Params.ML_PARAMS["reward_type"],
-            module=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.net,
             X=X_COUNTRY_ID_LIST["X_train"],
             y=X_COUNTRY_ID_LIST["y_train"],
             hyperparams=self.model_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)
-        pre_serialized_predictor.net_to_file(self.tmp_net_path)
+        pre_serialized_predictor.model_to_file(self.tmp_net_path)
 
         post_serialized_predictor = BanditPredictor.predictor_from_file(
             self.tmp_config_path, self.tmp_net_path
@@ -206,7 +206,7 @@ class TestPredictor(unittest.TestCase):
             "y_test": _y[Datasets._offset :],
         }
 
-        net_spec, pytorch_net = model_constructors.build_pytorch_net(
+        model_spec, pytorch_net = model_constructors.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST[
                 "features"
             ],
@@ -236,21 +236,21 @@ class TestPredictor(unittest.TestCase):
             ],
             transforms=Datasets.DATA_COUNTRY_DENSE_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_DENSE_ID_LIST["imputers"],
-            net=pytorch_net,
+            model=pytorch_net,
             reward_type=Params.ML_PARAMS["reward_type"],
-            net_spec=net_spec,
+            model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=Params.ML_PARAMS["reward_type"],
-            module=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.net,
             X=X_COUNTRY_DENSE_ID_LIST["X_train"],
             y=X_COUNTRY_DENSE_ID_LIST["y_train"],
             hyperparams=self.model_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)
-        pre_serialized_predictor.net_to_file(self.tmp_net_path)
+        pre_serialized_predictor.model_to_file(self.tmp_net_path)
 
         post_serialized_predictor = BanditPredictor.predictor_from_file(
             self.tmp_config_path, self.tmp_net_path
@@ -290,7 +290,7 @@ class TestPredictor(unittest.TestCase):
             "y_test": _y[Datasets._offset :],
         }
 
-        net_spec, pytorch_net = model_constructors.build_pytorch_net(
+        model_spec, pytorch_net = model_constructors.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
                 "features"
             ],
@@ -324,21 +324,21 @@ class TestPredictor(unittest.TestCase):
             ],
             transforms=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["imputers"],
-            net=pytorch_net,
+            model=pytorch_net,
             reward_type=Params.ML_PARAMS["reward_type"],
-            net_spec=net_spec,
+            model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=Params.ML_PARAMS["reward_type"],
-            module=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.net,
             X=X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
             y=X_COUNTRY_AND_DECISION_ID_LIST["y_train"],
             hyperparams=self.model_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)
-        pre_serialized_predictor.net_to_file(self.tmp_net_path)
+        pre_serialized_predictor.model_to_file(self.tmp_net_path)
 
         post_serialized_predictor = BanditPredictor.predictor_from_file(
             self.tmp_config_path, self.tmp_net_path
@@ -372,7 +372,7 @@ class TestPredictor(unittest.TestCase):
             "y_test": _y[Datasets._offset_binary_reward :],
         }
 
-        net_spec, pytorch_net = model_constructors.build_pytorch_net(
+        model_spec, pytorch_net = model_constructors.build_pytorch_net(
             feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
                 "features"
             ],
@@ -406,21 +406,21 @@ class TestPredictor(unittest.TestCase):
             ],
             transforms=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD["transforms"],
             imputers=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD["imputers"],
-            net=pytorch_net,
+            model=pytorch_net,
             reward_type=reward_type,
-            net_spec=net_spec,
+            model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=reward_type,
-            module=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.net,
             X=X_COUNTRY_CATEG_BINARY_REWARD["X_train"],
             y=X_COUNTRY_CATEG_BINARY_REWARD["y_train"],
             hyperparams=self.model_params,
         )
 
         pre_serialized_predictor.config_to_file(self.tmp_config_path)
-        pre_serialized_predictor.net_to_file(self.tmp_net_path)
+        pre_serialized_predictor.model_to_file(self.tmp_net_path)
 
         post_serialized_predictor = BanditPredictor.predictor_from_file(
             self.tmp_config_path, self.tmp_net_path

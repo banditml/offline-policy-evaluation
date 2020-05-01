@@ -25,8 +25,8 @@ This repo holds the open source machine learning code that powers [banditml.com]
 Models supported:
 
 - Contextual Bandits (small datasets)
-  - [ ] Random forest bandit w/ ε-greedy exploration
-  - [ ] Gradient boosted decision tree bandit w/ ε-greedy exploration
+  - [x] Random forest bandit w/ ε-greedy exploration
+  - [x] Gradient boosted decision tree bandit w/ ε-greedy exploration
 - Contextual Bandits (medium datasets)
   - [x] Neural bandit with ε-greedy exploration
   - [x] Neural bandit with UCB-based exploration [(via. dropout exploration)](https://arxiv.org/abs/1506.02142)

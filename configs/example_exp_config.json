@@ -1,11 +1,11 @@
 {
-  "experiment_id": "test-experiment-height-prediction-v1",
+  "experiment_id": "test-experiment-height-prediction-v3",
   "model_name": "model_v1",
   "features": {
     "country": {
         "type": "P",
         "product_set_id": "1",
-        "use_dense": false
+        "use_dense": true
     },
     "year": {"type": "N"},
     "decision": {"type": "C", "possible_values": ["male", "female"]}

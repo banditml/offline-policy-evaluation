@@ -8,9 +8,9 @@
     "decisions_ds_start": "2020-04-20",
     "decisions_ds_end": "2020-04-21",
     "rewards_ds_end": "2020-04-23",
-    "reward_function": {"height": 1, "nameOfADelayedReward": 0.05}
+    "reward_function": {"taller_than_165": 1, "nameOfADelayedReward": 0}
   },
-  "model_type": "neural_bandit",
+  "model_type": "gbdt_bandit",
   "reward_type": "binary",
   "model_params": {
     "neural_bandit": {
@@ -22,7 +22,15 @@
       "learning_rate": 0.001,
       "l2_decay": 0.0001
     },
-    "gbdt_bandit": {}
+    "gbdt_bandit": {
+      "learning_rate": 0.1,
+      "n_estimators": 100,
+      "max_depth": 3
+    },
+    "random_forest_bandit": {
+      "n_estimators": 100,
+      "max_depth": null
+    }
   },
-  "train_test_split": 0.8
+  "train_percent": 0.8
 }
