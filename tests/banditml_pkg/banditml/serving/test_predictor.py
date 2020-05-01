@@ -350,6 +350,28 @@ class TestPredictor(unittest.TestCase):
         assert np.allclose(pre_pred["scores"], post_pred["scores"], self.tol)
         assert pre_pred["ids"] == post_pred["ids"]
 
+        # add a test case for missing features in provided context
+        pre_pred_missing_feature = pre_serialized_predictor.predict({})
+        post_pred_missing_feature = post_serialized_predictor.predict({})
+
+        assert np.allclose(
+            pre_pred_missing_feature["scores"],
+            post_pred_missing_feature["scores"],
+            self.tol,
+        )
+        assert pre_pred_missing_feature["ids"] == post_pred_missing_feature["ids"]
+
+        # add a test case for garbage feature keys provided in context
+        pre_pred_garbage_feature = pre_serialized_predictor.predict({"blah": 42})
+        post_pred_garbage_feature = post_serialized_predictor.predict({"blah": 42})
+
+        assert np.allclose(
+            pre_pred_garbage_feature["scores"],
+            post_pred_garbage_feature["scores"],
+            self.tol,
+        )
+        assert pre_pred_garbage_feature["ids"] == post_pred_garbage_feature["ids"]
+
     def test_same_predictions_country_as_categorical_binary_reward(self):
         reward_type = "binary"
 
@@ -431,3 +453,25 @@ class TestPredictor(unittest.TestCase):
 
         assert np.allclose(pre_pred["scores"], post_pred["scores"], self.tol)
         assert pre_pred["ids"] == post_pred["ids"]
+
+        # add a test case for missing features in provided context
+        pre_pred_missing_feature = pre_serialized_predictor.predict({})
+        post_pred_missing_feature = post_serialized_predictor.predict({})
+
+        assert np.allclose(
+            pre_pred_missing_feature["scores"],
+            post_pred_missing_feature["scores"],
+            self.tol,
+        )
+        assert pre_pred_missing_feature["ids"] == post_pred_missing_feature["ids"]
+
+        # add a test case for garbage feature keys provided in context
+        pre_pred_garbage_feature = pre_serialized_predictor.predict({"blah": 42})
+        post_pred_garbage_feature = post_serialized_predictor.predict({"blah": 42})
+
+        assert np.allclose(
+            pre_pred_garbage_feature["scores"],
+            post_pred_garbage_feature["scores"],
+            self.tol,
+        )
+        assert pre_pred_garbage_feature["ids"] == post_pred_garbage_feature["ids"]
