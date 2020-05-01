@@ -1,3 +1,5 @@
+from sklearn import ensemble
+
 from banditml_pkg.banditml.models.embed_dnn import build_embedding_spec, EmbedDnn
 
 
@@ -25,7 +27,7 @@ def build_pytorch_net(
     )
     layers[0] += first_layer_dim_increase
 
-    net_spec = {
+    model_spec = {
         "layers": layers,
         "activations": activations,
         "dropout_ratio": dropout_ratio,
@@ -36,12 +38,32 @@ def build_pytorch_net(
         "embedding_info": embedding_info,
         "is_classification": is_classification,
     }
-    return net_spec, EmbedDnn(**net_spec)
+    return model_spec, EmbedDnn(**model_spec)
 
 
-def build_gbdt():
-    pass
+def build_gbdt(reward_type, learning_rate, n_estimators, max_depth):
+    is_classification = reward_type == "binary"
+    params = {
+        "learning_rate": learning_rate,
+        "n_estimators": n_estimators,
+        "max_depth": max_depth,
+    }
+
+    if is_classification:
+        gbdt_model = ensemble.GradientBoostingClassifier(**params)
+    else:
+        gbdt_model = ensemble.GradientBoostingRegressor(**params)
+
+    return gbdt_model
 
 
-def build_random_forest():
-    pass
+def build_random_forest(reward_type, n_estimators, max_depth):
+    is_classification = reward_type == "binary"
+    params = {"n_estimators": n_estimators, "max_depth": max_depth}
+
+    if is_classification:
+        gbdt_model = ensemble.RandomForestClassifier(**params)
+    else:
+        gbdt_model = ensemble.RandomForestRegressor(**params)
+
+    return gbdt_model

@@ -65,7 +65,7 @@ class EmbedDnn(nn.Module):
         self.id_feature_order = id_feature_order
         self.embeddings = nn.ModuleList()
         self.embeddings_idx_map = {}
-        self.net_spec = {}
+        self.model_spec = {}
         self.is_classification = is_classification
 
         assert len(layers) >= 2, "Invalid layer schema {} for network".format(layers)

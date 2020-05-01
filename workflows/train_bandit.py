@@ -69,7 +69,7 @@ def train(
 
     # build the model
     if model_type == "neural_bandit":
-        net_spec, pytorch_net = model_constructors.build_pytorch_net(
+        model_spec, model = model_constructors.build_pytorch_net(
             feature_specs=experiment_params["features"],
             product_sets=experiment_params["product_sets"],
             float_feature_order=data["final_float_feature_order"],
@@ -80,11 +80,30 @@ def train(
             dropout_ratio=model_params["dropout_ratio"],
             input_dim=num_float_dim(data),
         )
-        logger.info(f"Initialized model: {pytorch_net}")
+        logger.info(f"Initialized model: {model}")
     elif model_type == "gbdt_bandit":
-        pass
+        assert utils.pset_features_have_dense(experiment_params["features"]), (
+            "GBDT models require that product set features have associated"
+            "dense reprenstations."
+        )
+        model = model_constructors.build_gbdt(
+            reward_type=reward_type,
+            learning_rate=model_params["learning_rate"],
+            n_estimators=model_params["n_estimators"],
+            max_depth=model_params["max_depth"],
+        )
+        model_spec = None
     elif model_type == "random_forest_bandit":
-        pass
+        assert utils.pset_features_have_dense(experiment_params["features"]), (
+            "Random forest models require that product set features have associated"
+            "dense reprenstations."
+        )
+        model = model_constructors.build_random_forest(
+            reward_type=reward_type,
+            n_estimators=model_params["n_estimators"],
+            max_depth=model_params["max_depth"],
+        )
+        model_spec = None
 
     # build the predictor
     predictor = BanditPredictor(
@@ -94,9 +113,9 @@ def train(
         id_feature_str_to_int_map=data["id_feature_str_to_int_map"],
         transforms=data["transforms"],
         imputers=data["imputers"],
-        net=pytorch_net,
+        model=model,
         reward_type=reward_type,
-        net_spec=net_spec,
+        model_spec=model_spec,
     )
 
     # train the model
@@ -104,15 +123,21 @@ def train(
         logger.info(f"Starting training: {model_params} epochs")
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=reward_type,
-            module=predictor.net,
+            model=predictor.model,
             X=X,
             y=y,
             hyperparams=model_params,
+            train_percent=ml_params["train_percent"],
         )
-    elif model_type == "gbdt_bandit":
-        pass
-    elif model_type == "random_forest_bandit":
-        pass
+    elif model_type in ("gbdt_bandit", "random_forest_bandit"):
+        logger.info(f"Starting training: {model_type}")
+        sklearn_model, _ = model_trainers.fit_sklearn_model(
+            reward_type=reward_type,
+            model=model,
+            X=X,
+            y=y,
+            train_percent=ml_params["train_percent"],
+        )
 
     if predictor_save_dir is not None:
         logger.info("Saving predictor artifacts to disk...")
@@ -126,7 +151,7 @@ def train(
         predictor_net_path = f"{save_dir}/{model_name}.pt"
         predictor_config_path = f"{save_dir}/{model_name}.json"
         predictor.config_to_file(predictor_config_path)
-        predictor.net_to_file(predictor_net_path)
+        predictor.model_to_file(predictor_net_path)
 
         if s3_bucket_to_write_to is not None:
             logger.info("Writing predictor artifacts to s3...")

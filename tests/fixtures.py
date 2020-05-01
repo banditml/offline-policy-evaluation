@@ -76,7 +76,7 @@ class Params:
                 "dropout_ratio": 0.00,
             }
         },
-        "train_test_split": 0.8,
+        "train_percent": 0.8,
     }
 
     REWARD_FUNCTION_BINARY = {"taller_than_165": 1, "nameOfADelayedReward": 0}
@@ -91,7 +91,7 @@ class Datasets:
     DATASET_PATH = os.path.join(TEST_DIR, TEST_DATASET_DIR, TEST_DATASET_FILENAME)
 
     _raw_data = pd.read_csv(DATASET_PATH)
-    _offset = int(len(_raw_data) * Params.ML_PARAMS["train_test_split"])
+    _offset = int(len(_raw_data) * Params.ML_PARAMS["train_percent"])
 
     # dataset for country as categorical variable
     DATA_COUNTRY_CATEG = preprocessor.preprocess_data(
@@ -173,7 +173,7 @@ class Datasets:
 
     _raw_data_binary_reward = pd.read_csv(BINARY_REWARD_DATASET_PATH)
     _offset_binary_reward = int(
-        len(_raw_data_binary_reward) * Params.ML_PARAMS["train_test_split"]
+        len(_raw_data_binary_reward) * Params.ML_PARAMS["train_percent"]
     )
 
     # dataset for country as categorical variable & binary reward
