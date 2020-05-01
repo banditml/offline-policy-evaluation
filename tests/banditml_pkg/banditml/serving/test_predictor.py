@@ -87,7 +87,7 @@ class TestPredictor(unittest.TestCase):
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=Params.ML_PARAMS["reward_type"],
-            model=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.model,
             X=X_COUNTRY_CATEG["X_train"],
             y=X_COUNTRY_CATEG["y_train"],
             hyperparams=self.model_params,
@@ -167,7 +167,7 @@ class TestPredictor(unittest.TestCase):
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=Params.ML_PARAMS["reward_type"],
-            model=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.model,
             X=X_COUNTRY_ID_LIST["X_train"],
             y=X_COUNTRY_ID_LIST["y_train"],
             hyperparams=self.model_params,
@@ -243,7 +243,7 @@ class TestPredictor(unittest.TestCase):
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=Params.ML_PARAMS["reward_type"],
-            model=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.model,
             X=X_COUNTRY_DENSE_ID_LIST["X_train"],
             y=X_COUNTRY_DENSE_ID_LIST["y_train"],
             hyperparams=self.model_params,
@@ -331,7 +331,7 @@ class TestPredictor(unittest.TestCase):
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=Params.ML_PARAMS["reward_type"],
-            model=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.model,
             X=X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
             y=X_COUNTRY_AND_DECISION_ID_LIST["y_train"],
             hyperparams=self.model_params,
@@ -413,7 +413,7 @@ class TestPredictor(unittest.TestCase):
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=reward_type,
-            model=pre_serialized_predictor.net,
+            model=pre_serialized_predictor.model,
             X=X_COUNTRY_CATEG_BINARY_REWARD["X_train"],
             y=X_COUNTRY_CATEG_BINARY_REWARD["y_train"],
             hyperparams=self.model_params,
