@@ -4,7 +4,8 @@ to make one off predictions.
 
 Usage:
     python -m workflows.predict \
-    	--predictor_dir trained_models/test-experiment-height-prediction-v1 \
+    	--predictor_dir trained_models/test-experiment-height-prediction-v3 \
+        --context '{"year": 2019, "country": "serbia"}' \
         --model_name model_v1 \
         --get_ucb_scores
 """
@@ -51,10 +52,8 @@ def main(args):
     net_path = f"{args.predictor_dir}/{args.model_name}.pt"
     predictor = BanditPredictor.predictor_from_file(config_path, net_path)
 
-    json_input = json.dumps({"year": 2019, "country": "serbia"})
-
     start = time.time()
-    decisions = get_decisions(json_input, predictor, args.get_ucb_scores)
+    decisions = get_decisions(args.context, predictor, args.get_ucb_scores)
     end = time.time()
 
     logger.info(f"Prediction request took {round(end - start, 5)} seconds.")
@@ -69,6 +68,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--predictor_dir", required=True, type=str)
     parser.add_argument("--model_name", required=True, type=str)
+    parser.add_argument("--context", required=True, type=str)
     parser.add_argument("--get_ucb_scores", action="store_true")
     parser.add_argument("--get_exploration_decision", action="store_true")
     args = parser.parse_args()

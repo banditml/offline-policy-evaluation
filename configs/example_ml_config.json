@@ -10,7 +10,7 @@
     "rewards_ds_end": "2020-04-23",
     "reward_function": {"taller_than_165": 1, "nameOfADelayedReward": 0}
   },
-  "model_type": "gbdt_bandit",
+  "model_type": "neural_bandit",
   "reward_type": "binary",
   "model_params": {
     "neural_bandit": {

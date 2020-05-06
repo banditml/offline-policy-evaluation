@@ -1,5 +1,6 @@
 from collections import defaultdict
 import json
+import logging
 import time
 
 import numpy as np
@@ -10,6 +11,8 @@ import torch
 
 from ..models import embed_dnn
 from ..preprocessing import preprocessor
+
+logger = logging.getLogger(__name__)
 
 
 class BanditPredictor:
@@ -72,6 +75,14 @@ class BanditPredictor:
         id_list_feature_array = np.empty((len(df), 0))
 
         for feature_name in self.float_feature_order:
+            if feature_name not in df.columns:
+                # context is missing this feature, that is fine
+                logger.warning(f"'{feature_name}' expected in context, but missing.")
+                if self.experiment_params["features"][feature_name]["type"] == "C":
+                    df[feature_name] = preprocessor.MISSING_CATEGORICAL_CATEGORY
+                else:
+                    df[feature_name] = None
+
             values = self.transform_feature(
                 df[feature_name].values,
                 self.transforms[feature_name],
@@ -83,14 +94,33 @@ class BanditPredictor:
             meta = self.experiment_params["features"][feature_name]
             product_set_id = meta["product_set_id"]
             product_set_meta = self.experiment_params["product_sets"][product_set_id]
+
+            if feature_name not in df.columns:
+                # Handle passing missing product set feature
+                logger.warning(f"'{feature_name}' expected in context, but missing.")
+                df[feature_name] = None
+
             if meta["use_dense"] is True and "dense" in product_set_meta:
 
                 dense = defaultdict(list)
                 # TODO: don't like that this is O(n^2), think about better way to do this
                 for val in df[feature_name].values:
+                    dense_features = product_set_meta["dense"].get(val)
+                    if not dense_features:
+                        logger.warning(
+                            f"No dense representation found for '{feature_name}'"
+                            f" product set value '{val}'."
+                        )
                     for idx, feature_spec in enumerate(product_set_meta["features"]):
                         dense_feature_name = feature_spec["name"]
-                        dense_feature_val = product_set_meta["dense"][val][idx]
+                        if not dense_features:
+                            dense_feature_val = (
+                                preprocessor.MISSING_CATEGORICAL_CATEGORY
+                                if feature_spec["type"] == "C"
+                                else None
+                            )
+                        else:
+                            dense_feature_val = dense_features[idx]
                         dense[dense_feature_name].append(dense_feature_val)
 
                 for idx, feature_spec in enumerate(product_set_meta["features"]):
@@ -110,8 +140,10 @@ class BanditPredictor:
                 # sparse id list features need to be converted from string to int,
                 # but aside from that are not imputed or transformed.
                 str_to_int_map = self.id_feature_str_to_int_map[product_set_id]
+                # if the feature value is not present in the map, assign it to 0
+                # which corresponds to the null embedding row
                 values = self.transform_feature(
-                    df[feature_name].apply(lambda x: str_to_int_map[x]).values
+                    df[feature_name].apply(lambda x: str_to_int_map.get(x, 0)).values
                 )
                 id_list_feature_array = np.append(id_list_feature_array, values, axis=1)
 

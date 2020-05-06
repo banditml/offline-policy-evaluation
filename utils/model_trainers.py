@@ -1,4 +1,4 @@
-from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.metrics import accuracy_score, mean_squared_error, roc_auc_score
 from sklearn.model_selection import train_test_split
 from skorch import dataset, NeuralNetClassifier, NeuralNetRegressor
 import torch
@@ -12,6 +12,7 @@ def fit_custom_pytorch_module_w_skorch(
     reward_type, model, X, y, hyperparams, train_percent=0.8
 ):
     """Fit a custom PyTorch module using Skorch."""
+    logger.info(f"Model input dimension: {model.layers[0].in_features}")
 
     if reward_type == "regression":
         skorch_func = NeuralNetRegressor
@@ -37,6 +38,8 @@ def fit_custom_pytorch_module_w_skorch(
 
 def fit_sklearn_model(reward_type, model, X, y, train_percent=0.8):
     X = X["X_float"]
+    logger.info(f"Model input dimension: {X.shape[1]}")
+
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=(1 - train_percent)
     )
@@ -53,8 +56,12 @@ def fit_sklearn_model(reward_type, model, X, y, train_percent=0.8):
     else:
         acc_train = accuracy_score(y_train, model.predict(X_train))
         acc_test = accuracy_score(y_test, model.predict(X_test))
+        roc_train = roc_auc_score(y_train, model.predict(X_train))
+        roc_test = roc_auc_score(y_test, model.predict(X_test))
         logger.info(utils.color_text(f"Training accuracy: {acc_train}", color="blue"))
         logger.info(utils.color_text(f"Test accuracy: {acc_test}", color="green"))
+        logger.info(utils.color_text(f"Train ROC AUC: {roc_train}", color="blue"))
+        logger.info(utils.color_text(f"Test ROC AUC: {roc_test}", color="green"))
         training_stats["acc_train"] = acc_train
         training_stats["acc_test"] = acc_test
 

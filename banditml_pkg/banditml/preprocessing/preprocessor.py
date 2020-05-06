@@ -69,7 +69,12 @@ def preprocess_feature(
         possible_values = set(values.squeeze().tolist())
         logger.info(f"{feature_name} [{feature_type}]: {possible_values}")
         preprocessor = preprocessing.OneHotEncoder(sparse=False)
-        values = preprocessor.fit_transform(values)
+        # always add "null" as a possible value to categorical features
+        # so a missing value is fine during inference even if a missing
+        # value was never seen during traning.
+        fit_values = np.append(values, [[MISSING_CATEGORICAL_CATEGORY]], axis=0)
+        preprocessor.fit(fit_values)
+        values = preprocessor.transform(values)
         preprocessor.col_names = [
             feature_name + "_" + i for i in preprocessor.categories_[0]
         ]
