@@ -146,6 +146,7 @@ def train(
         transforms=data["transforms"],
         imputers=data["imputers"],
         model=model,
+        model_type=model_type,
         reward_type=reward_type,
         model_spec=model_spec,
     )

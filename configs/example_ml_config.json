@@ -13,7 +13,7 @@
     "features_to_use": ["*"]
   },
   "calc_feature_importance": true,
-  "model_type": "neural_bandit",
+  "model_type": "linear_bandit",
   "reward_type": "binary",
   "model_params": {
     "neural_bandit": {

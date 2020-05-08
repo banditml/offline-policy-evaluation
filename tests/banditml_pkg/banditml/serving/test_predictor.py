@@ -24,8 +24,8 @@ class TestPredictor(unittest.TestCase):
         cls.tmp_net_path = TMP_NET_PATH
         cls.tmp_config_path = TMP_CONFIG_PATH
 
-        model_type = Params.ML_PARAMS["model_type"]
-        cls.model_params = deepcopy(Params.ML_PARAMS["model_params"][model_type])
+        cls.model_type = Params.ML_PARAMS["model_type"]
+        cls.model_params = deepcopy(Params.ML_PARAMS["model_params"][cls.model_type])
         cls.model_params["max_epochs"] = 10
 
     @classmethod
@@ -81,6 +81,7 @@ class TestPredictor(unittest.TestCase):
             transforms=Datasets.DATA_COUNTRY_CATEG["transforms"],
             imputers=Datasets.DATA_COUNTRY_CATEG["imputers"],
             model=pytorch_net,
+            model_type=self.model_type,
             reward_type=Params.ML_PARAMS["reward_type"],
             model_spec=model_spec,
         )
@@ -161,6 +162,7 @@ class TestPredictor(unittest.TestCase):
             transforms=Datasets.DATA_COUNTRY_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_ID_LIST["imputers"],
             model=pytorch_net,
+            model_type=self.model_type,
             reward_type=Params.ML_PARAMS["reward_type"],
             model_spec=model_spec,
         )
@@ -237,6 +239,7 @@ class TestPredictor(unittest.TestCase):
             transforms=Datasets.DATA_COUNTRY_DENSE_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_DENSE_ID_LIST["imputers"],
             model=pytorch_net,
+            model_type=self.model_type,
             reward_type=Params.ML_PARAMS["reward_type"],
             model_spec=model_spec,
         )
@@ -325,6 +328,7 @@ class TestPredictor(unittest.TestCase):
             transforms=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["transforms"],
             imputers=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["imputers"],
             model=pytorch_net,
+            model_type=self.model_type,
             reward_type=Params.ML_PARAMS["reward_type"],
             model_spec=model_spec,
         )
@@ -429,6 +433,7 @@ class TestPredictor(unittest.TestCase):
             transforms=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD["transforms"],
             imputers=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD["imputers"],
             model=pytorch_net,
+            model_type=self.model_type,
             reward_type=reward_type,
             model_spec=model_spec,
         )
@@ -475,3 +480,132 @@ class TestPredictor(unittest.TestCase):
             self.tol,
         )
         assert pre_pred_garbage_feature["ids"] == post_pred_garbage_feature["ids"]
+
+    def test_same_predictions_country_as_categorical_sklearn_model(self):
+        """
+        Tests sklearn GBDT model + continuous reward.
+        """
+
+        raw_data = shuffle(Datasets._raw_data)
+        rand_idx = 0
+        test_input = raw_data.iloc[rand_idx]
+
+        data = preprocessor.preprocess_data(
+            raw_data,
+            Params.ML_PARAMS["data_reader"]["reward_function"],
+            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            shuffle_data=False,  # don't shuffle so we can test the same observation
+        )
+
+        _X, _y = preprocessor.data_to_pytorch(data)
+        X_COUNTRY_CATEG = {
+            "X_train": {"X_float": _X["X_float"][: Datasets._offset]},
+            "y_train": _y[: Datasets._offset],
+            "X_test": {"X_float": _X["X_float"][Datasets._offset :]},
+            "y_test": _y[Datasets._offset :],
+        }
+
+        model = model_constructors.build_gbdt(
+            reward_type=Params.ML_PARAMS["reward_type"]
+        )
+
+        pre_serialized_predictor = BanditPredictor(
+            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            float_feature_order=Datasets.DATA_COUNTRY_CATEG["float_feature_order"],
+            id_feature_order=Datasets.DATA_COUNTRY_CATEG["id_feature_order"],
+            id_feature_str_to_int_map=Datasets.DATA_COUNTRY_CATEG[
+                "id_feature_str_to_int_map"
+            ],
+            transforms=Datasets.DATA_COUNTRY_CATEG["transforms"],
+            imputers=Datasets.DATA_COUNTRY_CATEG["imputers"],
+            model=model,
+            model_type="gbdt_bandit",
+            reward_type=Params.ML_PARAMS["reward_type"],
+            model_spec=None,
+        )
+
+        skorch_net = model_trainers.fit_sklearn_model(
+            reward_type=Params.ML_PARAMS["reward_type"],
+            model=model,
+            X=X_COUNTRY_CATEG["X_train"],
+            y=X_COUNTRY_CATEG["y_train"],
+        )
+
+        pre_serialized_predictor.config_to_file(self.tmp_config_path)
+        pre_serialized_predictor.model_to_file(self.tmp_net_path)
+
+        post_serialized_predictor = BanditPredictor.predictor_from_file(
+            self.tmp_config_path, self.tmp_net_path
+        )
+
+        pre_pred = pre_serialized_predictor.predict(json.loads(test_input.context))
+        post_pred = post_serialized_predictor.predict(json.loads(test_input.context))
+
+        assert np.allclose(pre_pred["scores"], post_pred["scores"], self.tol)
+        assert pre_pred["ids"] == post_pred["ids"]
+
+    def test_same_predictions_country_as_categorical_sklearn_model_binary_reward(self):
+        """
+        Tests sklearn Linear model + binary reward.
+        """
+        reward_type = "binary"
+
+        raw_data = shuffle(Datasets._raw_data_binary_reward)
+        rand_idx = 0
+        test_input = raw_data.iloc[rand_idx]
+
+        data = preprocessor.preprocess_data(
+            raw_data,
+            Params.REWARD_FUNCTION_BINARY,
+            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            shuffle_data=False,  # don't shuffle so we can test the same observation
+        )
+
+        _X, _y = preprocessor.data_to_pytorch(data)
+        X_COUNTRY_CATEG_BINARY_REWARD = {
+            "X_train": {"X_float": _X["X_float"][: Datasets._offset_binary_reward]},
+            "y_train": _y[: Datasets._offset_binary_reward],
+            "X_test": {"X_float": _X["X_float"][Datasets._offset_binary_reward :]},
+            "y_test": _y[Datasets._offset_binary_reward :],
+        }
+
+        model = model_constructors.build_linear_model(reward_type=reward_type)
+
+        pre_serialized_predictor = BanditPredictor(
+            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            float_feature_order=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD[
+                "float_feature_order"
+            ],
+            id_feature_order=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD[
+                "id_feature_order"
+            ],
+            id_feature_str_to_int_map=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD[
+                "id_feature_str_to_int_map"
+            ],
+            transforms=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD["transforms"],
+            imputers=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD["imputers"],
+            model=model,
+            model_type="linear_bandit",
+            reward_type=reward_type,
+            model_spec=None,
+        )
+
+        skorch_net = model_trainers.fit_sklearn_model(
+            reward_type=reward_type,
+            model=model,
+            X=X_COUNTRY_CATEG_BINARY_REWARD["X_train"],
+            y=X_COUNTRY_CATEG_BINARY_REWARD["y_train"],
+        )
+
+        pre_serialized_predictor.config_to_file(self.tmp_config_path)
+        pre_serialized_predictor.model_to_file(self.tmp_net_path)
+
+        post_serialized_predictor = BanditPredictor.predictor_from_file(
+            self.tmp_config_path, self.tmp_net_path
+        )
+
+        pre_pred = pre_serialized_predictor.predict(json.loads(test_input.context))
+        post_pred = post_serialized_predictor.predict(json.loads(test_input.context))
+
+        assert np.allclose(pre_pred["scores"], post_pred["scores"], self.tol)
+        assert pre_pred["ids"] == post_pred["ids"]

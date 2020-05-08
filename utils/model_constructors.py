@@ -42,7 +42,7 @@ def build_pytorch_net(
     return model_spec, EmbedDnn(**model_spec)
 
 
-def build_gbdt(reward_type, learning_rate, n_estimators, max_depth):
+def build_gbdt(reward_type, learning_rate=0.1, n_estimators=100, max_depth=3):
     is_classification = reward_type == "binary"
     params = {
         "learning_rate": learning_rate,
@@ -70,7 +70,7 @@ def build_random_forest(reward_type, n_estimators=100, max_depth=None):
     return gbdt_model
 
 
-def build_linear_model(reward_type, penalty=None, alpha=None):
+def build_linear_model(reward_type, penalty="l2", alpha=1.0):
     is_classification = reward_type == "binary"
     if is_classification:
         params = {"penalty": penalty}
