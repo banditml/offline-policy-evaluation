@@ -8,13 +8,14 @@ import requests
 BANDIT_APP_CREDS_PATH = "credentials/bandit_app_creds.json"
 BANDIT_APP_EXP_CONFIG_URL = "https://www.banditml.com/api/exp_config"
 VALID_MODEL_TYPES = (
+    "linear_bandit",
     "neural_bandit",
     "random_forest_bandit",
     "gbdt_bandit",
     "dqn",
     "qr_dqn",
 )
-VALID_REWARD_TYPES = ("continuous", "binary")
+VALID_REWARD_TYPES = ("regression", "binary")
 
 
 def read_config(config_path):
