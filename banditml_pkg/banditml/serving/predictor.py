@@ -31,6 +31,7 @@ class BanditPredictor:
         model_type,
         reward_type,
         model_spec=None,
+        dense_features_to_use=["*"],
     ):
         self.experiment_params = experiment_params
         self.float_feature_order = float_feature_order
@@ -42,6 +43,7 @@ class BanditPredictor:
         self.model_type = model_type
         self.reward_type = reward_type
         self.model_spec = model_spec
+        self.dense_features_to_use = dense_features_to_use
 
         # the ordered decisions that we need to score over.
         self.decisions = []
@@ -127,16 +129,34 @@ class BanditPredictor:
                         dense[dense_feature_name].append(dense_feature_val)
 
                 for idx, feature_spec in enumerate(product_set_meta["features"]):
+                    dense_feature_name_desc = f"{feature_name}:{feature_spec['name']}"
+                    if (
+                        self.dense_features_to_use != ["*"]
+                        and dense_feature_name_desc not in self.dense_features_to_use
+                    ):
+                        continue
+
                     dtype = (
                         np.dtype(float)
                         if feature_spec["type"] == "N"
                         else np.dtype(object)
                     )
-                    vals = np.array(dense[feature_spec["name"]], dtype=dtype)
+
+                    vals = dense[feature_spec["name"]]
+                    if feature_spec["type"] == "C":
+                        # fill in null categorical values with a "null" category
+                        vals = [
+                            preprocessor.MISSING_CATEGORICAL_CATEGORY
+                            if v is None
+                            else v
+                            for v in vals
+                        ]
+
+                    vals = np.array(vals, dtype=dtype)
                     values = self.transform_feature(
                         vals,
-                        self.transforms[feature_spec["name"]],
-                        self.imputers[feature_spec["name"]],
+                        self.transforms[dense_feature_name_desc],
+                        self.imputers[dense_feature_name_desc],
                     )
                     float_feature_array = np.append(float_feature_array, values, axis=1)
             else:
@@ -168,7 +188,7 @@ class BanditPredictor:
         input = self.preprocess_input(input)
         pytorch_input = self.preprocessed_input_to_pytorch(input)
 
-        ucb_scores = []
+        ucb_scores = None
         if self.model_type == "neural_bandit":
             # pytorch model
             with torch.no_grad():
@@ -205,10 +225,21 @@ class BanditPredictor:
                 f"predict() for model type {self.model_type} not supported."
             )
 
+        if not ucb_scores:
+            ucb_scores = [0.0 for i in range(len(scores))]
+
+        # sort by scores before returning for visual convenience
+        scores = scores.tolist()
+        ids = self.decisions
+
+        zipped = zip(scores, ids, ucb_scores)
+        sorted_scores = sorted(zipped, reverse=True)
+        scores, ids, ucb_scores = zip(*sorted_scores)
+
         return {
-            "scores": scores.tolist(),
-            "ids": self.decisions,
-            "ucb_scores": ucb_scores,
+            "scores": list(scores),
+            "ids": list(ids),
+            "ucb_scores": list(ucb_scores),
         }
 
     def model_to_file(self, path):
@@ -242,6 +273,7 @@ class BanditPredictor:
             "float_feature_order": self.float_feature_order,
             "id_feature_order": self.id_feature_order,
             "id_feature_str_to_int_map": self.id_feature_str_to_int_map,
+            "dense_features_to_use": self.dense_features_to_use,
             "reward_type": self.reward_type,
             "transforms": {},
             "imputers": {},
@@ -344,4 +376,5 @@ class BanditPredictor:
             model_type=config_dict["model_type"],
             reward_type=config_dict["reward_type"],
             model_spec=config_dict["model_spec"],
+            dense_features_to_use=config_dict["dense_features_to_use"],
         )

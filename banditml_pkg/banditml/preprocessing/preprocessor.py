@@ -19,7 +19,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 MISSING_CATEGORICAL_CATEGORY = "null"
+
+# special features with reserved names
 DECISION_FEATURE_NAME = "decision"
+POSITION_FEATURE_NAME = "position"
 
 
 def get_preprocess_feature_order(
@@ -111,6 +114,7 @@ def preprocess_data(
     reward_function: Dict,
     experiment_params: Dict,
     features_to_use: List[str] = ["*"],
+    dense_features_to_use: List[str] = ["*"],
     shuffle_data: bool = True,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
@@ -217,12 +221,36 @@ def preprocess_data(
             dense = defaultdict(list)
             # TODO: don't like that this is O(n^2), think about better way to do this
             for val in X[feature_name].values:
+                dense_features = product_set_meta["dense"].get(val)
+                if not dense_features:
+                    logger.warning(
+                        f"No dense representation found for '{feature_name}'"
+                        f" product set value '{val}'."
+                    )
                 for idx, feature_spec in enumerate(product_set_meta["features"]):
+
                     dense_feature_name = feature_spec["name"]
-                    dense_feature_val = product_set_meta["dense"][val][idx]
+                    if not dense_features:
+                        dense_feature_val = (
+                            MISSING_CATEGORICAL_CATEGORY
+                            if feature_spec["type"] == "C"
+                            else None
+                        )
+                    else:
+                        dense_feature_val = dense_features[idx]
                     dense[dense_feature_name].append(dense_feature_val)
 
             for idx, feature_spec in enumerate(product_set_meta["features"]):
+                # prepend the id list feature name to prevent name collisions
+                # with two features that map to same product set
+                dense_feature_name_desc = f"{feature_name}:{feature_spec['name']}"
+
+                if (
+                    dense_features_to_use != ["*"]
+                    and dense_feature_name_desc not in dense_features_to_use
+                ):
+                    continue
+
                 dtype = (
                     np.dtype(float) if feature_spec["type"] == "N" else np.dtype(object)
                 )
@@ -236,15 +264,15 @@ def preprocess_data(
 
                 vals = np.array(vals, dtype=dtype)
                 df, preprocessor, imputer = preprocess_feature(
-                    feature_spec["name"],
+                    dense_feature_name_desc,
                     feature_spec["type"],
                     vals,
                     is_pset_dense_feature=True,
                 )
                 final_float_feature_order.extend(df.columns)
                 float_feature_df = pd.concat([float_feature_df, df], axis=1)
-                transforms[feature_spec["name"]] = preprocessor
-                imputers[feature_spec["name"]] = imputer
+                transforms[dense_feature_name_desc] = preprocessor
+                imputers[dense_feature_name_desc] = imputer
         else:
             # sparse id list features need to be converted from string to int,
             # but aside from that are not imputed or transformed.

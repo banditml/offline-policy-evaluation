@@ -63,12 +63,14 @@ def train(
     if features_to_use != ["*"]:
         features_to_use.append(preprocessor.DECISION_FEATURE_NAME)
     features_to_use = list(set(features_to_use))
+    dense_features_to_use = ml_params["data_reader"].get("dense_features_to_use", ["*"])
 
     data = preprocessor.preprocess_data(
         raw_data,
         ml_params["data_reader"]["reward_function"],
         experiment_params,
         features_to_use,
+        dense_features_to_use,
     )
     X, y = preprocessor.data_to_pytorch(data)
 
@@ -149,6 +151,7 @@ def train(
         model_type=model_type,
         reward_type=reward_type,
         model_spec=model_spec,
+        dense_features_to_use=dense_features_to_use,
     )
 
     # train the model

@@ -1,4 +1,4 @@
-from sklearn.metrics import accuracy_score, mean_squared_error, roc_auc_score
+from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score
 from sklearn.model_selection import train_test_split
 from skorch import dataset, NeuralNetClassifier, NeuralNetRegressor
 import torch
@@ -58,11 +58,19 @@ def fit_sklearn_model(reward_type, model, X, y, train_percent=0.8):
         acc_test = accuracy_score(y_test, model.predict(X_test))
         roc_train = roc_auc_score(y_train, model.predict(X_train))
         roc_test = roc_auc_score(y_test, model.predict(X_test))
+        lloss_train = log_loss(y_train, model.predict_proba(X_train))
+        lloss_test = log_loss(y_test, model.predict_proba(X_test))
         logger.info(utils.color_text(f"Training accuracy: {acc_train}", color="blue"))
         logger.info(utils.color_text(f"Test accuracy: {acc_test}", color="green"))
+        logger.info(utils.color_text(f"Training log loss: {lloss_train}", color="blue"))
+        logger.info(utils.color_text(f"Test log loss: {lloss_test}", color="green"))
         logger.info(utils.color_text(f"Train ROC AUC: {roc_train}", color="blue"))
         logger.info(utils.color_text(f"Test ROC AUC: {roc_test}", color="green"))
         training_stats["acc_train"] = acc_train
         training_stats["acc_test"] = acc_test
+        training_stats["roc_train"] = roc_train
+        training_stats["roc_test"] = roc_test
+        training_stats["lloss_train"] = lloss_train
+        training_stats["lloss_test"] = lloss_test
 
     return model, training_stats
