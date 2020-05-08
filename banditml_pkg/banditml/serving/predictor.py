@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 import logging
+import pickle
 import time
 
 import numpy as np
@@ -27,6 +28,7 @@ class BanditPredictor:
         transforms,
         imputers,
         model,
+        model_type,
         reward_type,
         model_spec=None,
     ):
@@ -37,6 +39,7 @@ class BanditPredictor:
         self.transforms = transforms
         self.imputers = imputers
         self.model = model
+        self.model_type = model_type
         self.reward_type = reward_type
         self.model_spec = model_spec
 
@@ -165,27 +168,42 @@ class BanditPredictor:
         input = self.preprocess_input(input)
         pytorch_input = self.preprocessed_input_to_pytorch(input)
 
-        with torch.no_grad():
-            scores = self.model.forward(**pytorch_input)
+        ucb_scores = []
+        if self.model_type == "neural_bandit":
+            # pytorch model
+            with torch.no_grad():
+                scores = self.model.forward(**pytorch_input)
 
-            # for binary classification we just need the score for the `1` label
+                # for binary classification we just need the score for the `1` label
+                if self.reward_type == "binary":
+                    scores = scores[:, 1:]
+
+                if get_ucb_scores:
+                    assert (
+                        self.model.use_dropout is True
+                    ), "Can only get UCB scores if model was trained with dropout."
+                    self.model.train()
+                    scores_samples = torch.tensor(
+                        [
+                            self.model.forward(**pytorch_input).numpy()
+                            for i in range(self.num_times_to_score)
+                        ]
+                    )
+                    ucb_scores = np.percentile(scores_samples, q=95, axis=0).tolist()
+        elif self.model_type in (
+            "linear_bandit",
+            "gbdt_bandit",
+            "random_forest_bandit",
+        ):
             if self.reward_type == "binary":
+                scores = self.model.predict_proba(pytorch_input["X_float"])
                 scores = scores[:, 1:]
-
-            ucb_scores = []
-
-            if get_ucb_scores:
-                assert (
-                    self.model.use_dropout is True
-                ), "Can only get UCB scores if model was trained with dropout."
-                self.model.train()
-                scores_samples = torch.tensor(
-                    [
-                        self.model.forward(**pytorch_input).numpy()
-                        for i in range(self.num_times_to_score)
-                    ]
-                )
-                ucb_scores = np.percentile(scores_samples, q=95, axis=0).tolist()
+            else:
+                scores = self.model.predict(pytorch_input["X_float"])
+        else:
+            raise Exception(
+                f"predict() for model type {self.model_type} not supported."
+            )
 
         return {
             "scores": scores.tolist(),
@@ -196,9 +214,20 @@ class BanditPredictor:
     def model_to_file(self, path):
         """
         Writing a Predictor object to file requires two files. This method
-        writes the PyTorch net to file using PyTorch's built in serialization.
+        writes the model to file using PyTorch's built in serialization (which
+        uses pickle) or explicitly using pickle for sklearn models.
         """
-        torch.save(self.model.state_dict(), path)
+        # TODO: stop using pickle
+        if self.model_type == "neural_bandit":
+            # https://pytorch.org/tutorials/beginner/saving_loading_models.html#what-is-a-state-dict
+            # torch.save: Saves a serialized object to disk. This function uses
+            # Python’s pickle utility for serialization. Models, tensors, and
+            # dictionaries of all kinds of objects can be saved using this function.
+            torch.save(self.model.state_dict(), path)
+        else:
+            # https://scikit-learn.org/stable/modules/model_persistence.html
+            with open(path, "wb") as f:
+                pickle.dump(self.model, f)
 
     def config_to_file(self, path):
         """
@@ -207,6 +236,7 @@ class BanditPredictor:
         objects/logic to a JSON file.
         """
         output = {
+            "model_type": self.model_type,
             "model_spec": self.model_spec,
             "experiment_params": self.experiment_params,
             "float_feature_order": self.float_feature_order,
@@ -257,14 +287,18 @@ class BanditPredictor:
             json.dump(output, f)
 
     @staticmethod
-    def predictor_from_file(config_path, net_path):
+    def predictor_from_file(config_path, model_path):
         with open(config_path, "rb") as f:
             config_dict = json.load(f)
 
-        # initialize the pytorch model and put it in `eval` mode
-        net = embed_dnn.EmbedDnn(**config_dict["model_spec"])
-        net.load_state_dict(torch.load(net_path))
-        net.eval()
+        if config_dict["model_type"] == "neural_bandit":
+            # initialize the pytorch model and put it in `eval` mode
+            model = embed_dnn.EmbedDnn(**config_dict["model_spec"])
+            model.load_state_dict(torch.load(model_path))
+            model.eval()
+        else:
+            with open(model_path, "rb") as f:
+                model = pickle.load(f)
 
         # initialize transforms
         transforms = {}
@@ -306,7 +340,8 @@ class BanditPredictor:
             id_feature_str_to_int_map=config_dict["id_feature_str_to_int_map"],
             transforms=transforms,
             imputers=imputers,
-            model=net,
+            model=model,
+            model_type=config_dict["model_type"],
             reward_type=config_dict["reward_type"],
             model_spec=config_dict["model_spec"],
         )
