@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="banditml",
-    version="0.4.1",
+    version="0.4.2",
     author="Edoardo Conti, Lionel Vital, Joseph Gilley",
     author_email="edoardo.conti@gmail.com",
     description="Portable Bandit ML code for training & serving consistency.",
@@ -23,7 +23,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License (GPL)",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",

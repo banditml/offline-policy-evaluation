@@ -19,7 +19,7 @@ import boto3
 from data_reader.bandit_reader import BigQueryReader
 from banditml_pkg.banditml.preprocessing import preprocessor
 from banditml_pkg.banditml.serving.predictor import BanditPredictor
-from utils import model_constructors, model_trainers, utils
+from utils import feature_importance, model_constructors, model_trainers, utils
 
 logger = utils.get_logger(__name__)
 
@@ -31,7 +31,6 @@ def num_float_dim(data):
 def train(
     ml_params: Dict,
     experiment_params: Dict,
-    model_name: str = None,
     predictor_save_dir: str = None,
     s3_bucket_to_write_to: str = None,
 ):
@@ -57,9 +56,19 @@ def train(
     logger.info(f"Got {len(raw_data)} rows of training data.")
     logger.info(raw_data.head())
 
-    logger.info("Kicking off data preprocessing...")
+    utils.fancy_print("Kicking off data preprocessing")
+
+    # always add decision as a feature to use if not using all features
+    features_to_use = ml_params["data_reader"].get("features_to_use", ["*"])
+    if features_to_use != ["*"]:
+        features_to_use.append(preprocessor.DECISION_FEATURE_NAME)
+    features_to_use = list(set(features_to_use))
+
     data = preprocessor.preprocess_data(
-        raw_data, ml_params["data_reader"]["reward_function"], experiment_params
+        raw_data,
+        ml_params["data_reader"]["reward_function"],
+        experiment_params,
+        features_to_use,
     )
     X, y = preprocessor.data_to_pytorch(data)
 
@@ -67,6 +76,18 @@ def train(
     model_params = ml_params["model_params"][model_type]
     reward_type = ml_params["reward_type"]
 
+    if ml_params.get("calc_feature_importance", False):
+        # calculate feature importances - only works on non id list features at this time
+        utils.fancy_print("Calculating feature importances")
+        feature_scores = feature_importance.calculate_feature_importance(
+            reward_type=reward_type,
+            feature_names=data["final_float_feature_order"],
+            X=X,
+            y=y,
+        )
+        feature_importance.display_feature_importances(feature_scores)
+
+    utils.fancy_print("Starting training")
     # build the model
     if model_type == "neural_bandit":
         model_spec, model = model_constructors.build_pytorch_net(
@@ -81,10 +102,21 @@ def train(
             input_dim=num_float_dim(data),
         )
         logger.info(f"Initialized model: {model}")
+    elif model_type == "linear_bandit":
+        assert utils.pset_features_have_dense(experiment_params["features"]), (
+            "Linear models require that product set features have associated"
+            "dense representations."
+        )
+        model = model_constructors.build_linear_model(
+            reward_type=reward_type,
+            penalty=model_params.get("penalty"),
+            alpha=model_params.get("alpha"),
+        )
+        model_spec = None
     elif model_type == "gbdt_bandit":
         assert utils.pset_features_have_dense(experiment_params["features"]), (
             "GBDT models require that product set features have associated"
-            "dense reprenstations."
+            "dense representations."
         )
         model = model_constructors.build_gbdt(
             reward_type=reward_type,
@@ -96,7 +128,7 @@ def train(
     elif model_type == "random_forest_bandit":
         assert utils.pset_features_have_dense(experiment_params["features"]), (
             "Random forest models require that product set features have associated"
-            "dense reprenstations."
+            "dense representations."
         )
         model = model_constructors.build_random_forest(
             reward_type=reward_type,
@@ -120,7 +152,7 @@ def train(
 
     # train the model
     if model_type == "neural_bandit":
-        logger.info(f"Starting training: {model_params} epochs")
+        logger.info(f"Training {model_type} for {model_params['max_epochs']} epochs")
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
             reward_type=reward_type,
             model=predictor.model,
@@ -129,8 +161,8 @@ def train(
             hyperparams=model_params,
             train_percent=ml_params["train_percent"],
         )
-    elif model_type in ("gbdt_bandit", "random_forest_bandit"):
-        logger.info(f"Starting training: {model_type}")
+    elif model_type in ("gbdt_bandit", "random_forest_bandit", "linear_bandit"):
+        logger.info(f"Training {model_type}")
         sklearn_model, _ = model_trainers.fit_sklearn_model(
             reward_type=reward_type,
             model=model,
@@ -142,7 +174,7 @@ def train(
     if predictor_save_dir is not None:
         logger.info("Saving predictor artifacts to disk...")
         experiment_id = experiment_params.get("experiment_id", "test")
-        model_name = experiment_params.get("model_name", "model")
+        model_name = ml_params.get("model_name", "model")
 
         save_dir = f"{predictor_save_dir}/{experiment_id}"
         if not os.path.exists(save_dir):
@@ -188,9 +220,8 @@ def main(args):
             args.experiment_id
         )
         experiment_params["experiment_id"] = args.experiment_id
-        experiment_params["model_name"] = args.model_name
 
-    logger.info("Using parameters: {}".format(ml_params))
+    logger.info("Using parameters: {}\n".format(ml_params))
     train(
         ml_params=ml_params,
         experiment_params=experiment_params,
@@ -206,7 +237,6 @@ if __name__ == "__main__":
     parser.add_argument("--ml_config_path", required=True, type=str)
     parser.add_argument("--experiment_config_path", required=False, type=str)
     parser.add_argument("--experiment_id", required=False, type=str)
-    parser.add_argument("--model_name", required=False, type=str)
     parser.add_argument("--predictor_save_dir", required=False, type=str)
     parser.add_argument("--s3_bucket_to_write_to", required=False, type=str)
     args = parser.parse_args()

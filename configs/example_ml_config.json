@@ -1,4 +1,5 @@
 {
+  "model_name": "model_v1",
   "data_reader": {
     "credential_path": "credentials/bq_creds.json",
     "bq_project": "gradient-decision",
@@ -8,8 +9,10 @@
     "decisions_ds_start": "2020-04-20",
     "decisions_ds_end": "2020-04-21",
     "rewards_ds_end": "2020-04-23",
-    "reward_function": {"taller_than_165": 1, "nameOfADelayedReward": 0}
+    "reward_function": {"taller_than_165": 1, "nameOfADelayedReward": 0},
+    "features_to_use": ["*"]
   },
+  "calc_feature_importance": true,
   "model_type": "neural_bandit",
   "reward_type": "binary",
   "model_params": {
@@ -30,6 +33,10 @@
     "random_forest_bandit": {
       "n_estimators": 100,
       "max_depth": null
+    },
+    "linear_bandit": {
+      "penalty": "l2",
+      "alpha": 1.0
     }
   },
   "train_percent": 0.8

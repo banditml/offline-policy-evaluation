@@ -1,4 +1,5 @@
 from sklearn import ensemble
+from sklearn import linear_model
 
 from banditml_pkg.banditml.models.embed_dnn import build_embedding_spec, EmbedDnn
 
@@ -57,7 +58,7 @@ def build_gbdt(reward_type, learning_rate, n_estimators, max_depth):
     return gbdt_model
 
 
-def build_random_forest(reward_type, n_estimators, max_depth):
+def build_random_forest(reward_type, n_estimators=100, max_depth=None):
     is_classification = reward_type == "binary"
     params = {"n_estimators": n_estimators, "max_depth": max_depth}
 
@@ -67,3 +68,15 @@ def build_random_forest(reward_type, n_estimators, max_depth):
         gbdt_model = ensemble.RandomForestRegressor(**params)
 
     return gbdt_model
+
+
+def build_linear_model(reward_type, penalty=None, alpha=None):
+    is_classification = reward_type == "binary"
+    if is_classification:
+        params = {"penalty": penalty}
+        linear_model_ = linear_model.LogisticRegression(**params)
+    else:
+        params = {"alpha": alpha}
+        linear_model_ = linear_model.Ridge(**params)
+
+    return linear_model_

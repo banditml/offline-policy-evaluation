@@ -1,6 +1,5 @@
 {
   "experiment_id": "test-experiment-height-prediction-v3",
-  "model_name": "model_v1",
   "features": {
     "country": {
         "type": "P",

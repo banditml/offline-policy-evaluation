@@ -1,5 +1,6 @@
 from collections import defaultdict
 import json
+import logging
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -9,14 +10,21 @@ from sklearn.impute import SimpleImputer
 from sklearn.utils import shuffle
 import torch
 from torch.nn.utils.rnn import pad_sequence
-from utils.utils import get_logger
 
-logger = get_logger(__name__)
+logging.basicConfig(
+    format="[%(asctime)s %(levelname)-3s] %(message)s",
+    level=logging.INFO,
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 MISSING_CATEGORICAL_CATEGORY = "null"
+DECISION_FEATURE_NAME = "decision"
 
 
-def get_preprocess_feature_order(features_spec: Dict) -> List[str]:
+def get_preprocess_feature_order(
+    features_spec: Dict, features_to_use: List[str]
+) -> List[str]:
     """Get order that features should be fed into the preprocessor. This will
     need to match bandit-app. For consistency, we will enforce the following
     ordering logic:
@@ -25,9 +33,12 @@ def get_preprocess_feature_order(features_spec: Dict) -> List[str]:
         - 1st order by feature type ["N", "C"] & ["P"]
         - 2nd order by alphabetical on feature_name a->z
     """
+
     N, C, P = [], [], []
     for feature_name, meta in features_spec.items():
-        if meta["type"] == "N":
+        if feature_name not in features_to_use and features_to_use != ["*"]:
+            pass
+        elif meta["type"] == "N":
             N.append(feature_name)
         elif meta["type"] == "C":
             C.append(feature_name)
@@ -46,9 +57,15 @@ def get_preprocess_feature_order(features_spec: Dict) -> List[str]:
 
 
 def preprocess_feature(
-    feature_name: str, feature_type: str, values: np.array
+    feature_name: str,
+    feature_type: str,
+    values: np.array,
+    is_pset_dense_feature: bool = False,
 ) -> Tuple[pd.DataFrame, int]:
     assert feature_type in ("N", "C")
+
+    # if this is a dense feature of a product set, make it clear in the logs
+    prefix = "  --> " if is_pset_dense_feature else ""
 
     # convert to scikit learn expected format
     values = values.reshape(-1, 1)
@@ -60,19 +77,23 @@ def preprocess_feature(
         imputer = SimpleImputer(strategy="mean")
         values = imputer.fit_transform(values)
         min_val, max_val = np.min(values), np.max(values)
-        logger.info(f"{feature_name} [{feature_type}]: [{min_val}, {max_val}]")
+        logger.info(f"{prefix}{feature_name} [{feature_type}]: [{min_val}, {max_val}]")
         preprocessor = preprocessing.StandardScaler()
         values = preprocessor.fit_transform(values)
         df = pd.DataFrame(values.squeeze(), columns=[feature_name])
     elif feature_type == "C":
         imputer = None
         possible_values = set(values.squeeze().tolist())
-        logger.info(f"{feature_name} [{feature_type}]: {possible_values}")
+        logger.info(f"{prefix}{feature_name} [{feature_type}]: {possible_values}")
         preprocessor = preprocessing.OneHotEncoder(sparse=False)
         # always add "null" as a possible value to categorical features
         # so a missing value is fine during inference even if a missing
-        # value was never seen during traning.
-        fit_values = np.append(values, [[MISSING_CATEGORICAL_CATEGORY]], axis=0)
+        # value was never seen during traning (expect for the decision feature).
+        if feature_name == DECISION_FEATURE_NAME:
+            fit_values = values
+        else:
+            fit_values = np.append(values, [[MISSING_CATEGORICAL_CATEGORY]], axis=0)
+
         preprocessor.fit(fit_values)
         values = preprocessor.transform(values)
         preprocessor.col_names = [
@@ -89,7 +110,8 @@ def preprocess_data(
     raw_data: pd.DataFrame,
     reward_function: Dict,
     experiment_params: Dict,
-    shuffle_data=True,
+    features_to_use: List[str] = ["*"],
+    shuffle_data: bool = True,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # start by randomizing the data upfront
@@ -97,11 +119,11 @@ def preprocess_data(
         raw_data = shuffle(raw_data)
 
     # if context or decision is missing, this row is unsalvageble so drop it
-    raw_data = raw_data.dropna(subset=["context", "decision"])
+    raw_data = raw_data.dropna(subset=["context", DECISION_FEATURE_NAME])
 
     # load the json string into json objects and expand into columns
     X = pd.json_normalize(raw_data["context"].apply(json.loads))
-    X["decision"] = raw_data["decision"].values
+    X[DECISION_FEATURE_NAME] = raw_data[DECISION_FEATURE_NAME].values
 
     # fill in missing (NaN) rewards with empty metric maps
     raw_data["immediate_reward"] = raw_data["immediate_reward"].fillna("{}")
@@ -117,7 +139,8 @@ def preprocess_data(
         raw_data["end_of_mdp_reward"].apply(lambda x: json.loads(x)).values
     )
     delayed_rewards = X.apply(
-        lambda row: row["end_of_mdp_reward"].get(str(row["decision"]), {}), axis=1
+        lambda row: row["end_of_mdp_reward"].get(str(row[DECISION_FEATURE_NAME]), {}),
+        axis=1,
     )
     delayed_y = pd.json_normalize(delayed_rewards)
     delayed_y = delayed_y.fillna(0)
@@ -141,15 +164,19 @@ def preprocess_data(
     total_rows = len(X)
     non_zero_reward_rows = sum(X["reward"] != 0)
     percent_non_zero = round(non_zero_reward_rows / total_rows * 100, 2)
+    logger.info("Reward stats")
+    logger.info(_sub_dividing_text())
     logger.info(
         f"{non_zero_reward_rows} of {total_rows} rows have non-zero reward "
         f"({percent_non_zero}%)"
     )
     logger.info(f"Reward range: [{min(X['reward'])}, {max(X['reward'])}]")
 
+    logger.info("Manually selected features")
+    logger.info(_sub_dividing_text())
     # order in which to preprocess features
     float_feature_order, id_feature_order = get_preprocess_feature_order(
-        experiment_params["features"]
+        experiment_params["features"], features_to_use
     )
     # final features names after preprocessing & expansion of categoricals
     final_float_feature_order, final_id_feature_order = [], []
@@ -209,7 +236,10 @@ def preprocess_data(
 
                 vals = np.array(vals, dtype=dtype)
                 df, preprocessor, imputer = preprocess_feature(
-                    feature_spec["name"], feature_spec["type"], vals
+                    feature_spec["name"],
+                    feature_spec["type"],
+                    vals,
+                    is_pset_dense_feature=True,
                 )
                 final_float_feature_order.extend(df.columns)
                 float_feature_df = pd.concat([float_feature_df, df], axis=1)
@@ -283,3 +313,7 @@ def data_to_pytorch(data: Dict):
         y = torch.tensor(data["y"].values, dtype=torch.float32).unsqueeze(dim=1)
 
     return X, y
+
+
+def _sub_dividing_text(size=40):
+    return "-" * size
