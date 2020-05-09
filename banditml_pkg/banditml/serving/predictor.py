@@ -229,7 +229,7 @@ class BanditPredictor:
             ucb_scores = [0.0 for i in range(len(scores))]
 
         # sort by scores before returning for visual convenience
-        scores = scores.tolist()
+        scores = scores.squeeze()
         ids = self.decisions
 
         zipped = zip(scores, ids, ucb_scores)
