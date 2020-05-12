@@ -19,8 +19,6 @@ from typing import Dict, List
 # temp code
 PROJECT = "gradient-decision"
 DATASET_ID = "bandit_app"
-DECISION_TABLE = "decisions"
-REWARDS_TABLE = "rewards"
 
 
 def create_dataset(
@@ -84,12 +82,12 @@ def main(args) -> None:
     # create decision table
     with open("scripts/schemas/decisions.json") as decisions_schema:
         fields = json.load(decisions_schema)
-        create_table(client, args.dataset, args.decisions_table, fields)
+        create_table(client, args.dataset, "decisions", fields)
 
     # create rewards table
     with open("scripts/schemas/rewards.json") as rewards_schema:
         fields = json.load(rewards_schema)
-        create_table(client, args.dataset, args.rewards_table, fields)
+        create_table(client, args.dataset, "rewards", fields)
 
     print("ML bandit dataset and tables created.")
 
@@ -107,18 +105,6 @@ if __name__ == "__main__":
         type=str,
         help="Dataset id in which to create tables in BigQuery.",
         default=DATASET_ID,
-    )
-    parser.add_argument(
-        "--decisions_table",
-        type=str,
-        help="Name of the decision table.",
-        default=DECISION_TABLE,
-    )
-    parser.add_argument(
-        "--rewards_table",
-        type=str,
-        help="Name of the rewards table.",
-        default=REWARDS_TABLE,
     )
     parser.add_argument(
         "--creds_path",

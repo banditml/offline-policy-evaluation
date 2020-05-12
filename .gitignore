@@ -9,6 +9,10 @@ configs/*
 !configs/example_exp_config.json
 !configs/example_ml_config.json
 
+## ignore all credentials in /credentials except examples
+credentials/*
+!credentials/example_bandit_app_creds.json
+
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/

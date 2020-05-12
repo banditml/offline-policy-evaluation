@@ -96,8 +96,8 @@ class Datasets:
     # dataset for country as categorical variable
     DATA_COUNTRY_CATEG = preprocessor.preprocess_data(
         _raw_data,
-        Params.ML_PARAMS["data_reader"]["reward_function"],
         Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+        Params.ML_PARAMS["reward_type"],
     )
     _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_CATEG)
     X_COUNTRY_CATEG = {
@@ -110,8 +110,8 @@ class Datasets:
     # dataset for country as ID list variable
     DATA_COUNTRY_ID_LIST = preprocessor.preprocess_data(
         _raw_data,
-        Params.ML_PARAMS["data_reader"]["reward_function"],
         Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST,
+        Params.ML_PARAMS["reward_type"],
     )
     _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_ID_LIST)
     X_COUNTRY_ID_LIST = {
@@ -132,8 +132,8 @@ class Datasets:
     # dataset for country as dense ID list variable
     DATA_COUNTRY_DENSE_ID_LIST = preprocessor.preprocess_data(
         _raw_data,
-        Params.ML_PARAMS["data_reader"]["reward_function"],
         Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST,
+        Params.ML_PARAMS["reward_type"],
     )
     _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_DENSE_ID_LIST)
     X_COUNTRY_DENSE_ID_LIST = {
@@ -146,8 +146,8 @@ class Datasets:
     # dataset for country as ID list AND decision as ID list variables
     DATA_COUNTRY_AND_DECISION_ID_LIST = preprocessor.preprocess_data(
         _raw_data,
-        Params.ML_PARAMS["data_reader"]["reward_function"],
         Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST,
+        Params.ML_PARAMS["reward_type"],
     )
     _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_AND_DECISION_ID_LIST)
     X_COUNTRY_AND_DECISION_ID_LIST = {
@@ -179,8 +179,8 @@ class Datasets:
     # dataset for country as categorical variable & binary reward
     DATA_COUNTRY_CATEG_BINARY_REWARD = preprocessor.preprocess_data(
         _raw_data_binary_reward,
-        Params.REWARD_FUNCTION_BINARY,
         Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+        "binary",
     )
     _X_binary_reward, _y_binary_reward = preprocessor.data_to_pytorch(
         DATA_COUNTRY_CATEG_BINARY_REWARD
