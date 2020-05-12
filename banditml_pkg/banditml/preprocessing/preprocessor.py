@@ -111,8 +111,8 @@ def preprocess_feature(
 
 def preprocess_data(
     raw_data: pd.DataFrame,
-    reward_function: Dict,
     experiment_params: Dict,
+    reward_type: str,
     features_to_use: List[str] = ["*"],
     dense_features_to_use: List[str] = ["*"],
     shuffle_data: bool = True,
@@ -128,39 +128,8 @@ def preprocess_data(
     # load the json string into json objects and expand into columns
     X = pd.json_normalize(raw_data["context"].apply(json.loads))
     X[DECISION_FEATURE_NAME] = raw_data[DECISION_FEATURE_NAME].values
+    X["reward"] = raw_data["reward"].astype(float).values
 
-    # fill in missing (NaN) rewards with empty metric maps
-    raw_data["immediate_reward"] = raw_data["immediate_reward"].fillna("{}")
-    immediate_y = pd.json_normalize(
-        raw_data["immediate_reward"].apply(lambda x: json.loads(x))
-    )
-    immediate_y = immediate_y.fillna(0)
-
-    # calculate the delayed rewards which requires joining them to their
-    # previous decisions
-    raw_data["end_of_mdp_reward"] = raw_data["delayed_reward"].fillna("{}")
-    X["end_of_mdp_reward"] = (
-        raw_data["end_of_mdp_reward"].apply(lambda x: json.loads(x)).values
-    )
-    delayed_rewards = X.apply(
-        lambda row: row["end_of_mdp_reward"].get(str(row[DECISION_FEATURE_NAME]), {}),
-        axis=1,
-    )
-    delayed_y = pd.json_normalize(delayed_rewards)
-    delayed_y = delayed_y.fillna(0)
-
-    # initialize the final reward scalar with 0s
-    X["reward"] = np.zeros(len(X))
-
-    # then add the linear combination of immediate rewards
-    for metrics_name, series in immediate_y.iteritems():
-        X["reward"] += series * reward_function[metrics_name]
-
-    # then add the linear combination of delayed rewards
-    for metrics_name, series in delayed_y.iteritems():
-        X["reward"] += series * reward_function[metrics_name]
-
-    reward_df = X["reward"]
     float_feature_df = pd.DataFrame()
     id_list_feature_df = pd.DataFrame()
 
@@ -174,7 +143,14 @@ def preprocess_data(
         f"{non_zero_reward_rows} of {total_rows} rows have non-zero reward "
         f"({percent_non_zero}%)"
     )
-    logger.info(f"Reward range: [{min(X['reward'])}, {max(X['reward'])}]")
+
+    max_reward = max(X["reward"])
+    min_reward = min(X["reward"])
+    logger.info(f"Reward range: [{min_reward}, {max_reward}]")
+    if reward_type == "binary" and max_reward > 1:
+        logger.warning("Reward type specified as binary, but reward > 1 found.")
+        logger.warning("Coverting rewards to binary values.")
+        X["reward"] = (X["reward"] > 0) * 1
 
     logger.info("Manually selected features")
     logger.info(_sub_dividing_text())
@@ -288,7 +264,7 @@ def preprocess_data(
             imputers[feature_name] = None
 
     return {
-        "y": reward_df,
+        "y": X["reward"],
         "X_float": float_feature_df,
         "X_id_list": id_list_feature_df,
         "transforms": transforms,

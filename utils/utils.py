@@ -5,7 +5,6 @@ from typing import Dict, NoReturn
 
 import requests
 
-BANDIT_APP_CREDS_PATH = "credentials/bandit_app_creds.json"
 BANDIT_APP_EXP_CONFIG_URL = "https://www.banditml.com/api/exp_config"
 VALID_MODEL_TYPES = (
     "linear_bandit",
@@ -64,8 +63,8 @@ def color_text(text: str, color="blue"):
     return f"{ansi_color}{text}{end_color}"
 
 
-def get_experiment_config_from_bandit_app(experiment_id):
-    with open(BANDIT_APP_CREDS_PATH) as json_file:
+def get_experiment_config_from_bandit_app(bandit_app_creds_path, experiment_id):
+    with open(bandit_app_creds_path) as json_file:
         creds = json.load(json_file)
 
     api_key = creds["api_key"]

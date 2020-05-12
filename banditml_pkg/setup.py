@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="banditml",
-    version="0.5.2",
+    version="0.5.3",
     author="Edoardo Conti, Lionel Vital, Joseph Gilley",
     author_email="edoardo.conti@gmail.com",
     description="Portable Bandit ML code for training & serving consistency.",

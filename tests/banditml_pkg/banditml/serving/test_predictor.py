@@ -40,8 +40,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.ML_PARAMS["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            Params.ML_PARAMS["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -114,8 +114,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.ML_PARAMS["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST,
+            Params.ML_PARAMS["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -195,8 +195,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.ML_PARAMS["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST,
+            Params.ML_PARAMS["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -272,8 +272,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.ML_PARAMS["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST,
+            Params.ML_PARAMS["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -385,8 +385,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.REWARD_FUNCTION_BINARY,
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            reward_type,
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -492,8 +492,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.ML_PARAMS["data_reader"]["reward_function"],
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            Params.ML_PARAMS["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -556,8 +556,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.REWARD_FUNCTION_BINARY,
             Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            reward_type,
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 

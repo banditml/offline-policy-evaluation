@@ -24,8 +24,8 @@ def main(args):
     credentials = service_account.Credentials.from_service_account_file(args.creds_path)
     client = bigquery.Client(project=args.project, credentials=credentials)
 
-    decisions_table = f"{args.project}.{args.dataset}.{args.decisions_table}"
-    rewards_table = f"{args.project}.{args.dataset}.{args.rewards_table}"
+    decisions_table = f"{args.project}.{args.dataset}.decisions"
+    rewards_table = f"{args.project}.{args.dataset}.rewards"
 
     print("Checking decisions table...")
     print("-" * 30)
@@ -441,18 +441,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--creds_path", type=str, help="Path to a GCP credentials file", required=True
-    )
-    parser.add_argument(
-        "--decisions_table",
-        type=str,
-        help="Name of the decisions table.",
-        default="decisions",
-    )
-    parser.add_argument(
-        "--rewards_table",
-        type=str,
-        help="Name of the rewards table.",
-        default="rewards",
     )
     parser.add_argument(
         "--experiment_id",

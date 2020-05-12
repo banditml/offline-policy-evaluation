@@ -40,11 +40,10 @@ def train(
         credential_path=ml_params["data_reader"]["credential_path"],
         bq_project=ml_params["data_reader"]["bq_project"],
         bq_dataset=ml_params["data_reader"]["bq_dataset"],
-        decisions_table=ml_params["data_reader"]["decisions_table"],
-        rewards_table=ml_params["data_reader"]["rewards_table"],
         decisions_ds_start=ml_params["data_reader"]["decisions_ds_start"],
         decisions_ds_end=ml_params["data_reader"]["decisions_ds_end"],
         rewards_ds_end=ml_params["data_reader"]["rewards_ds_end"],
+        reward_function=ml_params["data_reader"]["reward_function"],
         experiment_id=experiment_params["experiment_id"],
     )
 
@@ -67,8 +66,8 @@ def train(
 
     data = preprocessor.preprocess_data(
         raw_data,
-        ml_params["data_reader"]["reward_function"],
         experiment_params,
+        ml_params["reward_type"],
         features_to_use,
         dense_features_to_use,
     )
@@ -219,9 +218,13 @@ def main(args):
             "If no --experiment_config_path provided, --experiment_id must"
             " be provided to fetch experiment config from bandit app."
         )
+        assert "bandit_app_credential_path" in ml_params, (
+            "If getting experiment config from banditml.com, must provide"
+            " valid api key path in `bandit_app_credential_path` in ml config."
+        )
         logger.info("Getting experiment config from banditml.com...")
         experiment_params = utils.get_experiment_config_from_bandit_app(
-            args.experiment_id
+            ml_params["bandit_app_credential_path"], args.experiment_id
         )
         experiment_params["experiment_id"] = args.experiment_id
 
