@@ -24,6 +24,9 @@ MISSING_CATEGORICAL_CATEGORY = "null"
 DECISION_FEATURE_NAME = "decision"
 POSITION_FEATURE_NAME = "position"
 
+NUMPY_NUMERIC_TYPE = np.number
+NUMPY_CATEGORICAL_TYPE = np.str_
+
 
 def get_preprocess_feature_order(
     features_spec: Dict, features_to_use: List[str]
@@ -74,6 +77,15 @@ def preprocess_feature(
     values = values.reshape(-1, 1)
 
     if feature_type == "N":
+        # numeric features should be... numbers
+        if not np.issubdtype(values.dtype, NUMPY_NUMERIC_TYPE):
+            logger.warning(
+                f"{feature_name} of type `N` has values of type {values.dtype}, "
+                "but it should have numeric values. Attempting to cast it, but "
+                "this might cause issues..."
+            )
+            values = values.astype(NUMPY_NUMERIC_TYPE)
+
         # standard scaler seems to be right choice for numeric features
         # in regression problems
         # http://rajeshmahajan.com/standard-scaler-v-min-max-scaler-machine-learning/
@@ -85,9 +97,16 @@ def preprocess_feature(
         values = preprocessor.fit_transform(values)
         df = pd.DataFrame(values.squeeze(), columns=[feature_name])
     elif feature_type == "C":
+        # categorical features should be strings
+        if not values.dtype.type is NUMPY_CATEGORICAL_TYPE:
+            logger.warning(
+                f"{feature_name} of type `C` has values of type {values.dtype}, "
+                "but it should have string values. Attempting to cast it, but "
+                "this might cause issues..."
+            )
+            values = values.astype(NUMPY_CATEGORICAL_TYPE)
+
         imputer = None
-        possible_values = set(values.squeeze().tolist())
-        logger.info(f"{prefix}{feature_name} [{feature_type}]: {possible_values}")
         preprocessor = preprocessing.OneHotEncoder(sparse=False)
         # always add "null" as a possible value to categorical features
         # so a missing value is fine during inference even if a missing
@@ -96,6 +115,9 @@ def preprocess_feature(
             fit_values = values
         else:
             fit_values = np.append(values, [[MISSING_CATEGORICAL_CATEGORY]], axis=0)
+
+        possible_values = set(fit_values.squeeze().tolist())
+        logger.info(f"{prefix}{feature_name} [{feature_type}]: {possible_values}")
 
         preprocessor.fit(fit_values)
         values = preprocessor.transform(values)
@@ -228,7 +250,9 @@ def preprocess_data(
                     continue
 
                 dtype = (
-                    np.dtype(float) if feature_spec["type"] == "N" else np.dtype(object)
+                    NUMPY_NUMERIC_TYPE
+                    if feature_spec["type"] == "N"
+                    else NUMPY_CATEGORICAL_TYPE
                 )
 
                 vals = dense[feature_spec["name"]]
