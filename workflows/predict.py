@@ -6,6 +6,7 @@ Usage:
     python -m workflows.predict \
     	--predictor_dir trained_models/test-experiment-height-prediction-v3 \
         --context '{"year": 2019, "country": "serbia"}' \
+        --choices '["male", "female"]' \
         --model_name model_v1 \
         --get_ucb_scores
 """
@@ -40,11 +41,12 @@ def get_single_decision(decisions):
     }
 
 
-def get_decisions(json_input, predictor, get_ucb_scores=False):
+def get_decisions(json_input, json_choices, predictor, get_ucb_scores=False):
     """Function that simulates a real time Python service making
     a prediction."""
     input = json.loads(json_input)
-    return predictor.predict(input, get_ucb_scores)
+    choices = json.loads(json_choices) if json_choices else None
+    return predictor.predict(input, choices, get_ucb_scores)
 
 
 def main(args):
@@ -53,7 +55,10 @@ def main(args):
     predictor = BanditPredictor.predictor_from_file(config_path, net_path)
 
     start = time.time()
-    decisions = get_decisions(args.context, predictor, args.get_ucb_scores)
+    choices = args.choices or None
+    decisions = get_decisions(
+        args.context, args.choices, predictor, args.get_ucb_scores
+    )
     end = time.time()
 
     logger.info(f"Prediction request took {round(end - start, 5)} seconds.")
@@ -69,6 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--predictor_dir", required=True, type=str)
     parser.add_argument("--model_name", required=True, type=str)
     parser.add_argument("--context", required=True, type=str)
+    parser.add_argument("--choices", type=str)
     parser.add_argument("--get_ucb_scores", action="store_true")
     parser.add_argument("--get_exploration_decision", action="store_true")
     args = parser.parse_args()

@@ -62,9 +62,10 @@ class BanditPredictor:
 
         return vals
 
-    def preprocess_input(self, input):
-        # score all decisions so expand the input across decisions
-        self.choices = self.experiment_params["choices"]
+    def preprocess_input(self, input, choices):
+        # score input choices or all choices by default if none provided.
+        # expand the input across all of these choices
+        self.choices = choices or self.experiment_params["choices"]
         expanded_input = [dict(input, **{"decision": d}) for d in self.choices]
 
         df = pd.DataFrame(expanded_input)
@@ -191,13 +192,13 @@ class BanditPredictor:
         X, _ = preprocessor.data_to_pytorch(data)
         return X
 
-    def predict(self, input, get_ucb_scores=False):
+    def predict(self, input, choices=None, get_ucb_scores=False):
         """
         If `get_ucb_scores` is True, get upper confidence bound scores which
         requires a model trained with dropout and for the model to be in train()
         mode (eval model turns off dropout by default).
         """
-        input = self.preprocess_input(input)
+        input = self.preprocess_input(input, choices)
         pytorch_input = self.preprocessed_input_to_pytorch(input)
 
         ucb_scores = None
