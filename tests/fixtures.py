@@ -10,10 +10,11 @@ class Params:
 
     # experiment params for country as ID list variable
     EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST = {
+        "choices": ["male", "female"],
         "features": {
             "country": {"type": "P", "product_set_id": "1", "use_dense": False},
             "year": {"type": "N"},
-            "decision": {"type": "C", "possible_values": ["male", "female"]},
+            "decision": {"type": "C"},
         },
         "product_sets": {
             "1": {

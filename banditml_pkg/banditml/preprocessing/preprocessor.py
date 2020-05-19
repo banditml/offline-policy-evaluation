@@ -98,6 +98,7 @@ def preprocess_feature(
         values = preprocessor.fit_transform(values)
         df = pd.DataFrame(values.squeeze(), columns=[feature_name])
     elif feature_type == "C":
+
         # categorical features should be strings
         if not values.dtype.type is NUMPY_CATEGORICAL_TYPE:
             logger.warning(
