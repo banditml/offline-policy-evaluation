@@ -38,7 +38,7 @@ def main(args):
         select
             *
         from `{args.project}.{args.dataset}`.INFORMATION_SCHEMA.COLUMNS
-        where table_name = "{args.decisions_table}"
+        where table_name = "{decisions_table}"
         """,
     )
     print(df)
@@ -194,7 +194,7 @@ def main(args):
         select
             *
         from `{args.project}.{args.dataset}`.INFORMATION_SCHEMA.COLUMNS
-        where table_name = "{args.rewards_table}"
+        where table_name = "{rewards_table}"
         """,
     )
     print(df)

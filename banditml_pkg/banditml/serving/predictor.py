@@ -45,8 +45,8 @@ class BanditPredictor:
         self.model_spec = model_spec
         self.dense_features_to_use = dense_features_to_use
 
-        # the ordered decisions that we need to score over.
-        self.decisions = []
+        # the ordered choices that we need to score over.
+        self.choices = []
 
         # if using dropout to get prediction uncertainty, how many times to score
         # the same observation
@@ -62,19 +62,12 @@ class BanditPredictor:
 
         return vals
 
-    def preprocess_input(self, input):
-        # score all decisions so expand the input across decisions
-        decision_meta = self.experiment_params["features"]["decision"]
-        if decision_meta["type"] == "C":
-            decisions = decision_meta["possible_values"]
-            expanded_input = [dict(input, **{"decision": d}) for d in decisions]
-        elif decision_meta["type"] == "P":
-            product_set_id = decision_meta["product_set_id"]
-            product_set = self.experiment_params["product_sets"][product_set_id]
-            decisions = product_set["ids"]
-            expanded_input = [dict(input, **{"decision": d}) for d in decisions]
+    def preprocess_input(self, input, choices):
+        # score input choices or all choices by default if none provided.
+        # expand the input across all of these choices
+        self.choices = choices or self.experiment_params["choices"]
+        expanded_input = [dict(input, **{"decision": d}) for d in self.choices]
 
-        self.decisions = decisions
         df = pd.DataFrame(expanded_input)
         float_feature_array = np.empty((len(df), 0))
         id_list_feature_array = np.empty((len(df), 0))
@@ -110,22 +103,42 @@ class BanditPredictor:
                 dense = defaultdict(list)
                 # TODO: don't like that this is O(n^2), think about better way to do this
                 for val in df[feature_name].values:
-                    dense_features = product_set_meta["dense"].get(val)
-                    if not dense_features:
-                        logger.warning(
-                            f"No dense representation found for '{feature_name}'"
-                            f" product set value '{val}'."
-                        )
-                    for idx, feature_spec in enumerate(product_set_meta["features"]):
-                        dense_feature_name = feature_spec["name"]
+                    if not isinstance(val, list):
+                        val = [val]
+
+                    dense_matrix = []
+                    for v in val:
+                        dense_features = product_set_meta["dense"].get(v)
                         if not dense_features:
-                            dense_feature_val = (
-                                preprocessor.MISSING_CATEGORICAL_CATEGORY
-                                if feature_spec["type"] == "C"
-                                else None
+                            logger.warning(
+                                f"No dense representation found for '{feature_name}'"
+                                f" product set value '{v}'."
                             )
                         else:
-                            dense_feature_val = dense_features[idx]
+                            dense_matrix.append(dense_features)
+
+                    if not dense_matrix:
+                        # there were no or no valid id features to add, add an
+                        # empty row to be imputed
+                        dense_matrix.append([])
+
+                    for idx, feature_spec in enumerate(product_set_meta["features"]):
+                        dense_feature_name = feature_spec["name"]
+                        row_vals = []
+                        for row in dense_matrix:
+                            if not row:
+                                dense_feature_val = (
+                                    preprocessor.MISSING_CATEGORICAL_CATEGORY
+                                    if feature_spec["type"] == "C"
+                                    else None
+                                )
+                            else:
+                                dense_feature_val = row[idx]
+                            row_vals.append(dense_feature_val)
+
+                        dense_feature_val = preprocessor.flatten_dense_id_list_feature(
+                            row_vals, feature_spec["type"]
+                        )
                         dense[dense_feature_name].append(dense_feature_val)
 
                 for idx, feature_spec in enumerate(product_set_meta["features"]):
@@ -179,13 +192,13 @@ class BanditPredictor:
         X, _ = preprocessor.data_to_pytorch(data)
         return X
 
-    def predict(self, input, get_ucb_scores=False):
+    def predict(self, input, choices=None, get_ucb_scores=False):
         """
         If `get_ucb_scores` is True, get upper confidence bound scores which
         requires a model trained with dropout and for the model to be in train()
         mode (eval model turns off dropout by default).
         """
-        input = self.preprocess_input(input)
+        input = self.preprocess_input(input, choices)
         pytorch_input = self.preprocessed_input_to_pytorch(input)
 
         ucb_scores = None
@@ -230,7 +243,7 @@ class BanditPredictor:
 
         # sort by scores before returning for visual convenience
         scores = scores.squeeze()
-        ids = self.decisions
+        ids = self.choices
 
         zipped = zip(scores, ids, ucb_scores)
         sorted_scores = sorted(zipped, reverse=True)

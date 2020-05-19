@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 import logging
+import statistics
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -97,6 +98,7 @@ def preprocess_feature(
         values = preprocessor.fit_transform(values)
         df = pd.DataFrame(values.squeeze(), columns=[feature_name])
     elif feature_type == "C":
+
         # categorical features should be strings
         if not values.dtype.type is NUMPY_CATEGORICAL_TYPE:
             logger.warning(
@@ -219,23 +221,42 @@ def preprocess_data(
             dense = defaultdict(list)
             # TODO: don't like that this is O(n^2), think about better way to do this
             for val in X[feature_name].values:
-                dense_features = product_set_meta["dense"].get(val)
-                if not dense_features:
-                    logger.warning(
-                        f"No dense representation found for '{feature_name}'"
-                        f" product set value '{val}'."
-                    )
-                for idx, feature_spec in enumerate(product_set_meta["features"]):
+                if not isinstance(val, list):
+                    val = [val]
 
-                    dense_feature_name = feature_spec["name"]
+                dense_matrix = []
+                for v in val:
+                    dense_features = product_set_meta["dense"].get(v)
                     if not dense_features:
-                        dense_feature_val = (
-                            MISSING_CATEGORICAL_CATEGORY
-                            if feature_spec["type"] == "C"
-                            else None
+                        logger.warning(
+                            f"No dense representation found for '{feature_name}'"
+                            f" product set value '{v}'."
                         )
                     else:
-                        dense_feature_val = dense_features[idx]
+                        dense_matrix.append(dense_features)
+
+                if not dense_matrix:
+                    # there were no or no valid id features to add, add an
+                    # empty row to be imputed
+                    dense_matrix.append([])
+
+                for idx, feature_spec in enumerate(product_set_meta["features"]):
+                    dense_feature_name = feature_spec["name"]
+                    row_vals = []
+                    for row in dense_matrix:
+                        if not row:
+                            dense_feature_val = (
+                                MISSING_CATEGORICAL_CATEGORY
+                                if feature_spec["type"] == "C"
+                                else None
+                            )
+                        else:
+                            dense_feature_val = row[idx]
+                        row_vals.append(dense_feature_val)
+
+                    dense_feature_val = flatten_dense_id_list_feature(
+                        row_vals, feature_spec["type"]
+                    )
                     dense[dense_feature_name].append(dense_feature_val)
 
             for idx, feature_spec in enumerate(product_set_meta["features"]):
@@ -279,10 +300,24 @@ def preprocess_data(
             product_set_id = experiment_params["features"][feature_name][
                 "product_set_id"
             ]
+
             str_to_int_map = id_feature_str_to_int_map[product_set_id]
+
+            def _str_id_list_converter(input):
+                if not isinstance(input, list):
+                    input = [input]
+                out = []
+                for i in input:
+                    int_id = str_to_int_map.get(i)
+                    if not int_id:
+                        logger.info(f"{i} missing from product_set {product_set_id}")
+                    else:
+                        out.append(int_id)
+                return out
+
             final_id_feature_order.append(feature_name)
             id_list_feature_df[feature_name] = pd.Series(X[feature_name].values).apply(
-                lambda x: str_to_int_map[x]
+                lambda x: _str_id_list_converter(x)
             )
             transforms[feature_name] = None
             imputers[feature_name] = None
@@ -299,6 +334,22 @@ def preprocess_data(
         "final_float_feature_order": final_float_feature_order,
         "final_id_feature_order": final_id_feature_order,
     }
+
+
+def flatten_dense_id_list_feature(vals, feature_type):
+    if feature_type == "C":
+        # flatten categorical dense features by taking the mode
+        return max(set(vals), key=vals.count)
+    elif feature_type == "N":
+        # drop nones and take mean across values remaining
+        vals = [v for v in vals if v is not None]
+
+        if not vals:
+            return None
+
+        return statistics.mean(vals)
+
+    raise Exception(f"Feature type {feature_type} not supported.")
 
 
 def data_to_pytorch(data: Dict):
