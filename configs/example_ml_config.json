@@ -11,7 +11,11 @@
     "features_to_use": ["*"],
     "dense_features_to_use": ["*"]
   },
-  "calc_feature_importance": true,
+  "feature_importance": {
+    "calc_feature_importance": true,
+    "keep_only_top_n": false,
+    "n": 10
+  },
   "model_type": "linear_bandit",
   "reward_type": "binary",
   "model_params": {

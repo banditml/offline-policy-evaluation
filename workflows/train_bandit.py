@@ -77,7 +77,8 @@ def train(
     model_params = ml_params["model_params"][model_type]
     reward_type = ml_params["reward_type"]
 
-    if ml_params.get("calc_feature_importance", False):
+    feature_importance_params = ml_params.get("feature_importance", {})
+    if feature_importance_params.get("calc_feature_importance", False):
         # calculate feature importances - only works on non id list features at this time
         utils.fancy_print("Calculating feature importances")
         feature_scores = feature_importance.calculate_feature_importance(
@@ -87,6 +88,21 @@ def train(
             y=y,
         )
         feature_importance.display_feature_importances(feature_scores)
+
+        # TODO: Make keeping the top "n" features work in predictor. Right now
+        # using this feature breaks predictor, so don't use it in a final model,
+        # just use it to experiment in seeing how model performance is.
+        if feature_importance_params.get("keep_only_top_n", False):
+            utils.fancy_print("Keeping only top N features")
+            X, final_float_feature_order = feature_importance.keep_top_n_features(
+                n=feature_importance_params["n"],
+                X=X,
+                feature_order=data["final_float_feature_order"],
+                feature_scores=feature_scores,
+            )
+            data["final_float_feature_order"] = final_float_feature_order
+            logger.info(f"Keeping top {feature_importance_params['n']} features:")
+            logger.info(final_float_feature_order)
 
     utils.fancy_print("Starting training")
     # build the model
