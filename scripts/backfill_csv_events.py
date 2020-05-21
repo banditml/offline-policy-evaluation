@@ -22,13 +22,7 @@ from google.oauth2 import service_account
 import numpy as np
 import pandas as pd
 
-# Bigquery configs
-PROJECT = "gradient-decision"
-DATASET_ID = "bandit_app"
-TABLE_NAME = "feedback"
-CREDS_PATH = "credentials/bq_creds.json"
 CHUNK_WRITE_SIZE = 10000
-
 EVENT_MAPPING = {}
 
 
@@ -115,25 +109,25 @@ if __name__ == "__main__":
         "--project",
         type=str,
         help="The ID of the GCP project where to create the Bigquery tables.",
-        default=PROJECT,
+        default="gradient-decision",
     )
     parser.add_argument(
         "--dataset",
         type=str,
         help="Dataset id in which to create tables in BigQuery.",
-        default=DATASET_ID,
+        default="bandit_app",
     )
     parser.add_argument(
         "--table_name",
         type=str,
         help="Name of the table to insert into.",
-        default=TABLE_NAME,
+        default="feedback",
     )
     parser.add_argument(
         "--creds_path",
         type=str,
         help="Path to a GCP credentials file",
-        required=False,  # use current account if not passed explicitly
+        default="credentials/bq_creds.json",
     )
     args = parser.parse_args()
     main(args)
