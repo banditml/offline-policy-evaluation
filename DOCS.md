@@ -3,17 +3,16 @@
 This guide walks through training and serving bandit models.
 
 ## Installation
-banditml requires Python (>= 3.7).
+`banditml` uses [`pipenv`](https://github.com/pypa/pipenv) to manage its environment.
 
 Clone the repo & install the requirements:
 ```
 git clone https://github.com/banditml/banditml.git
 cd banditml
-virtualenv env
-. env/bin/activate
-pip install -r requirements.txt
+pipenv install --python 3.7
 ```
 You're good to go!
+
 ## Data format
 Bandit ML expects data to be stored in [Google BigQuery](https://cloud.google.com/bigquery). Specifically, two tables are needed (`decisions` and `rewards`)
 
@@ -29,10 +28,10 @@ Bandit ML expects data to be stored in [Google BigQuery](https://cloud.google.co
 
 Sample records:
 ```
- row | decision_id |            context           | decision |   experiment_id   | mdp_id | variant_id |     ts     | score |
------|-------------|------------------------------|----------|-------------------|--------|------------|------------|-------|
-  1  |   c2aa520f  | {"country": 2, "year": 1796} |  female  | height-prediction |    a   |      2     | 1585612647 |  1.3  |
-  2  |   f3e637a5  | {"country": 4, "year": 2017} |   male   | height-prediction |    b   |      1     | 1585834128 |  0.2  |
+ | row | decision_id | context                      | decision | experiment_id     | mdp_id | variant_id | ts         | score |
+ | --- | ----------- | ---------------------------- | -------- | ----------------- | ------ | ---------- | ---------- | ----- |
+ | 1   | c2aa520f    | {"country": 2, "year": 1796} | female   | height-prediction | a      | 2          | 1585612647 | 1.3   |
+ | 2   | f3e637a5    | {"country": 4, "year": 2017} | male     | height-prediction | b      | 1          | 1585834128 | 0.2   |
 ```
 
 `rewards` table:
@@ -45,11 +44,11 @@ Sample records:
 
 Sample records:
 ```
- Row | decision_id | decision |              metrics             |   experiment_id   | mdp_id |     ts     |
------|-------------|----------|----------------------------------|-------------------|--------|------------|
-  1  |   c2aa520f  |  female  |        {"height": 158.462}       | height-prediction |    a   | 1585613418 |
-  2  |   f3e637a5  |   male   |        {"height": 172.331}       | height-prediction |    b   | 1585934016 |
-  3  |             |          | {"female": {"delayedMetric": 1}} | height-prediction |    a   | 1599999016 |
+ | Row | decision_id | decision | metrics                          | experiment_id     | mdp_id | ts         |
+ | --- | ----------- | -------- | -------------------------------- | ----------------- | ------ | ---------- |
+ | 1   | c2aa520f    | female   | {"height": 158.462}              | height-prediction | a      | 1585613418 |
+ | 2   | f3e637a5    | male     | {"height": 172.331}              | height-prediction | b      | 1585934016 |
+ | 3   |             |          | {"female": {"delayedMetric": 1}} | height-prediction | a      | 1599999016 |
 ```
 
 **IMPORTANT:**  <b>*Immediate*</b> rewards vs. <b>*delayed*</b> rewards:
