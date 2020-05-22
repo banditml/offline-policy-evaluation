@@ -8,6 +8,7 @@ pylint = "*"
 black = "*"
 rope = "*"
 faker = "*"
+flake8 = "*"
 
 [packages]
 attrs = "*"
