@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple
 from faker import Faker
 from faker.providers import internet
 
-from models import (
+from data_reader.models import (
     REWARD_TYPE_DELAYED,
     REWARD_TYPE_IMMEDIATE,
     Feedback,
@@ -28,17 +28,16 @@ class TestFeedbackMappers(unittest.TestCase):
             "mdp_id": uuid.uuid4(),
             "decision_id": uuid.uuid4(),
             "decision": random.choices(["a", "b", "c"]),
-            "timestamp": time.time(),
-            "variant_id": random.choices([1, 2, 3, 4]),
+            "ts": time.time(),
+            "variation_id": random.choices([1, 2, 3, 4]),
             "context": json.dumps({"ip_address": self.faker.ipv4()}),
             "score": random.random() * 10.0,
         }
         f = Feedback.from_decision("tesla", d)
         self.assertEqual("tesla", f.company)
+        self.assertEqual("decision", f.type)
         self.assert_match_bq_record(d, f)
-        self.assertEqual("decision", f.event_category)
-        self.assertEqual(d["timestamp"], f.timestamp)
-        self.assertEqual(d["variant_id"], f.variant_id)
+        self.assertEqual(d["variation_id"], f.variant_id)
         self.assertEqual(d["context"], f.decision_context_json)
         self.assertEqual(d["score"], f.choice_score)
 
@@ -53,8 +52,7 @@ class TestFeedbackMappers(unittest.TestCase):
         self.assertEqual(len(feedbacks), 3, "1 feedback per metric")
         for f in feedbacks:
             self.assertEqual("tesla", f.company)
-            self.assertEqual(r["ts"], f.timestamp)
-            self.assertEqual("reward", f.event_category)
+            self.assertEqual("reward", f.type)
             self.assertEqual(REWARD_TYPE_IMMEDIATE, f.reward_type)
         self.assert_metrics(metrics, feedbacks)
 
@@ -83,14 +81,15 @@ class TestFeedbackMappers(unittest.TestCase):
     def assert_metrics(self, metrics: Dict, feedbacks: List[Feedback]):
         for metric_name, metric_value in metrics.items():
             match_feedback = next(
-                (f for f in feedbacks if f.event == metric_name), None
+                (f for f in feedbacks if f.reward_metric == metric_name), None
             )
             self.assertIsNotNone(match_feedback)
             self.assertEqual(metric_value, match_feedback.reward_value)
 
-    def assert_match_bq_record(self, r: LegacyBase, f: Feedback, delayed:bool=False):
+    def assert_match_bq_record(self, r: LegacyBase, f: Feedback, delayed: bool = False):
         self.assertEqual(r["experiment_id"], f.experiment_id)
         self.assertEqual(r["mdp_id"], f.mdp_id)
+        self.assertEqual(r["ts"], f.timestamp)
         if not delayed:
             self.assertEqual(r["decision_id"], f.decision_id)
             self.assertEqual(r["decision"], f.choice_id)

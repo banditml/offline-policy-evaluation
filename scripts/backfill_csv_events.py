@@ -86,7 +86,7 @@ def main(args):
     print(f"Successfully inserted {num_successes} events.")
 
     if num_fails > 0:
-        print(f"Failed to insert {num_fails} events.")
+    print(f"Failed to insert {num_fails} events.")
         print("Preview of errors:")
         print(f"{all_errors[:5]}")
 

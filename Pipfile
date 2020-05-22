@@ -9,6 +9,7 @@ black = "*"
 rope = "*"
 faker = "*"
 flake8 = "*"
+click = "*"
 
 [packages]
 attrs = "*"
