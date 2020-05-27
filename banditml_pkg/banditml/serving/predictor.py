@@ -74,12 +74,21 @@ class BanditPredictor:
 
         for feature_name in self.float_feature_order:
             if feature_name not in df.columns:
-                # context is missing this feature, that is fine
-                logger.warning(f"'{feature_name}' expected in context, but missing.")
-                if self.experiment_params["features"][feature_name]["type"] == "C":
-                    df[feature_name] = preprocessor.MISSING_CATEGORICAL_CATEGORY
+
+                if feature_name == preprocessor.POSITION_FEATURE_NAME:
+                    # always score position feature at a fixed position
+                    # since including it in training was just meant to debias
+                    df[feature_name] = 0
+
                 else:
-                    df[feature_name] = None
+                    # context is missing this feature, that is fine
+                    logger.warning(
+                        f"'{feature_name}' expected in context, but missing."
+                    )
+                    if self.experiment_params["features"][feature_name]["type"] == "C":
+                        df[feature_name] = preprocessor.MISSING_CATEGORICAL_CATEGORY
+                    else:
+                        df[feature_name] = None
 
             values = self.transform_feature(
                 df[feature_name].values,
