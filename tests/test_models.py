@@ -8,11 +8,11 @@ from typing import Dict, List, Tuple
 from faker import Faker
 from faker.providers import internet
 
-from data_reader.models import (
+from banditml_pkg.banditml.db.v1 import Base as LegacyBase
+from banditml_pkg.banditml.db.v2 import (
+    Feedback,
     REWARD_TYPE_DELAYED,
     REWARD_TYPE_IMMEDIATE,
-    Feedback,
-    LegacyBase,
     Reward,
 )
 

@@ -111,7 +111,7 @@ class Table:
             skip_invalid_rows=False,
             ignore_unknown_values=False,
         )
-        return errors
+        return self._filter_errors(errors)
 
     def buffered_write(self, record: Dict):
         """Buffer write a record.
@@ -127,23 +127,6 @@ class Table:
         """Flushes the write buffer."""
         self._write_buffer()
 
-    def _partition_field_clause(self):
-        return (
-            f"""DATE({self.partition_field}) > "2000-01-01" """
-            if self.partition_field
-            else ""
-        )
-
-    def _write_buffer(self):
-        num_records = len(self.buffer)
-        errors = self.write_all(self.buffer)
-        self.bad_records.extend((self.buffer[error["index"]] for error in errors))
-        self.buffer = []
-        num_errors = len(errors)
-        num_successes = num_records - num_errors
-        self.total_written += num_successes
-        self.total_errors += num_errors
-
     def mapper(self, row):
         """(Abstract) Maps a BQ row to a BanditML model."""
         raise NotImplementedError()
@@ -157,6 +140,35 @@ class Table:
         if self.total_errors > 0:
             s += f"\nsample of bad records:\n{self.bad_records[-5:]}"
         return s
+
+    @staticmethod
+    def _filter_errors(errors):
+        filtered_errors = []
+        for e1 in errors:
+            for e2 in e1["errors"]:
+                if e2.get("reason", None) != "stopped":
+                    filtered_errors.append(e1)
+        return filtered_errors
+
+    def _partition_field_clause(self):
+        return (
+            f"""DATE({self.partition_field}) > "2000-01-01" """
+            if self.partition_field
+            else ""
+        )
+
+    def _write_buffer(self):
+        num_records = len(self.buffer)
+        errors = self.write_all(self.buffer)
+        self.bad_records.extend(
+            {"record": self.buffer[error["index"]], "errors": error["errors"]}
+            for error in errors
+        )
+        self.buffer = []
+        num_errors = len(errors)
+        num_successes = num_records - num_errors
+        self.total_written += num_successes
+        self.total_errors += num_errors
 
 
 def get_table(client, project_id, dataset_id, name) -> bigquery.Table:

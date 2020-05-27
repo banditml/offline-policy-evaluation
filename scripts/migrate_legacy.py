@@ -19,34 +19,40 @@ class Migrator:
         dataset_id: str,
         dry_run: bool = True,
         create_table_only: bool = False,
+        should_migrate_rewards: bool = False,
+        should_migrate_decisions: bool = False,
     ):
         self.client: bigquery.Client = client
         self.project_id: str = project_id
         self.dataset_id: str = dataset_id
         self.dry_run: bool = dry_run
         self.create_table_only: bool = create_table_only
+        self.should_migrate_rewards: bool = should_migrate_rewards
+        self.should_migrate_decisions: bool = should_migrate_decisions
 
-        try:
-            self.reward_table: RewardTable = RewardTable(
-                client, project_id=project_id, dataset_id=dataset_id
-            )
-        except TableNotFound:
-            click.echo(
-                "Rewards table does not exist, check project and dataset IDs and try again.",
-                err=True,
-            )
-            return
+        if should_migrate_rewards:
+            try:
+                self.reward_table: RewardTable = RewardTable(
+                    client, project_id=project_id, dataset_id=dataset_id
+                )
+            except TableNotFound:
+                click.echo(
+                    "Rewards table does not exist, check project and dataset IDs and try again.",
+                    err=True,
+                )
+                return
 
-        try:
-            self.decision_table: DecisionTable = DecisionTable(
-                client, project_id=project_id, dataset_id=dataset_id
-            )
-        except TableNotFound:
-            click.echo(
-                "Decisions table does not exist, check project and dataset IDs and try again.",
-                err=True,
-            )
-            return
+        if should_migrate_decisions:
+            try:
+                self.decision_table: DecisionTable = DecisionTable(
+                    client, project_id=project_id, dataset_id=dataset_id
+                )
+            except TableNotFound:
+                click.echo(
+                    "Decisions table does not exist, check project and dataset IDs and try again.",
+                    err=True,
+                )
+                return
 
         self.feedback_table: Optional[FeedbackTable] = None
 
@@ -55,7 +61,7 @@ class Migrator:
             self.feedback_table = FeedbackTable(
                 self.client, project_id=self.project_id, dataset_id=self.dataset_id
             )
-            click.echo("Feedback table exists already!")
+            click.echo("Feedback table exists.")
         except TableNotFound:
             should_create = click.prompt(
                 "Feedback table does not exist, create?", default=True, type=bool
@@ -72,9 +78,11 @@ class Migrator:
                 click.echo("Dry run enabled, would have created feedback table.")
                 click.echo("Cannot continue dry run without feedback table.")
                 return True
+
         if self.create_table_only:
             click.echo("Data migration disabled, all done!")
             return True
+
         if self.feedback_table.size() > 0:
             should_overwrite = click.prompt(
                 "Feedback table has data, migrate anyway? This might result in duplicated results.",
@@ -84,8 +92,10 @@ class Migrator:
             )
             if not should_overwrite:
                 return False
-        self.migrate_decisions()
-        self.migrate_rewards()
+        if self.should_migrate_decisions:
+            self.migrate_decisions()
+        if self.should_migrate_rewards:
+            self.migrate_rewards()
         return True
 
     def migrate_rewards(self):
@@ -135,7 +145,22 @@ class Migrator:
     help="Only create the new table, but do not migrate any legacy data",
 )
 @click.option("-f", "--force", is_flag=True, help="Disables dry-run mode.")
-def migrate(gcp_project_id, gcp_dataset_id, gcp_creds_file, table_only, force) -> bool:
+@click.option("--rewards", is_flag=True, help="Only migrate the rewards table.")
+@click.option("--decisions", is_flag=True, help="Only migrate the decisions table.")
+def migrate(
+    gcp_project_id,
+    gcp_dataset_id,
+    gcp_creds_file,
+    table_only,
+    force,
+    rewards,
+    decisions,
+) -> bool:
+    if not rewards and not decisions:
+        # if both are not specified, that means migrate both.
+        rewards = True
+        decisions = True
+
     is_dry_run = not force
     try:
         client = create_bq_client(gcp_project_id, gcp_creds_file=gcp_creds_file)
@@ -152,12 +177,15 @@ def migrate(gcp_project_id, gcp_dataset_id, gcp_creds_file, table_only, force) -
         return False
     if is_dry_run:
         click.echo("*** DRY RUN (run with -f/--force to write data) ***")
+
     return Migrator(
         client,
         gcp_project_id,
         gcp_dataset_id,
         dry_run=is_dry_run,
         create_table_only=table_only,
+        should_migrate_rewards=rewards,
+        should_migrate_decisions=decisions,
     ).run()
 
 

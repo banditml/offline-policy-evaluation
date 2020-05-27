@@ -22,14 +22,14 @@ SCHEMA = [
     bigquery.SchemaField("mdp_id", "STRING", mode="NULLABLE"),
     bigquery.SchemaField("type", "STRING", mode="NULLABLE"),
     bigquery.SchemaField("choice_id", "STRING", mode="NULLABLE"),
-    bigquery.SchemaField("choice_score", "NUMERIC", mode="NULLABLE"),
+    bigquery.SchemaField("choice_score", "FLOAT64", mode="NULLABLE"),
     bigquery.SchemaField("variant_id", "INT64", mode="NULLABLE"),
     bigquery.SchemaField("variant_slug", "STRING", mode="NULLABLE"),
     bigquery.SchemaField("decision_id", "STRING", mode="NULLABLE"),
     bigquery.SchemaField("decision_context_json", "STRING", mode="NULLABLE"),
     bigquery.SchemaField("reward_type", "STRING", mode="NULLABLE"),
     bigquery.SchemaField("reward_metric", "STRING", mode="NULLABLE"),
-    bigquery.SchemaField("reward_value", "NUMERIC", mode="NULLABLE"),
+    bigquery.SchemaField("reward_value", "FLOAT64", mode="NULLABLE"),
 ]
 
 
@@ -40,15 +40,17 @@ class Feedback:
         self.experiment_id: str = kwargs.get("experiment_id", None)
         self.mdp_id: str = kwargs.get("mdp_id", None)
         self.type: str = kwargs.get("type", None)
-        self.choice_id: Optional[str] = kwargs.get("decision", None)
-        self.choice_score: Optional[float] = kwargs.get("score", None)
+        self.choice_id: Optional[str] = kwargs.get("choice_id", None)
+        self.choice_score: Optional[float] = kwargs.get("choice_score", None)
         self.variant_id: Optional[int] = kwargs.get("variation_id", None)
         self.variant_slug: Optional[str] = kwargs.get("variant_slug", None)
         self.decision_id: Optional[str] = kwargs.get("decision_id", None)
-        self.decision_context_json: Optional[str] = kwargs.get("context", None)
-        self.reward_type: Optional[str] = None
-        self.reward_metric: Optional[str] = None
-        self.reward_value: Optional[float] = None
+        self.decision_context_json: Optional[str] = kwargs.get(
+            "decision_context_json", None
+        )
+        self.reward_type: Optional[str] = kwargs.get("reward_type", None)
+        self.reward_metric: Optional[str] = kwargs.get("reward_metric", None)
+        self.reward_value: Optional[float] = kwargs.get("reward_value", None)
 
     def to_dict(self) -> Dict:
         return self.__dict__
@@ -59,7 +61,14 @@ class Feedback:
         Maps a v1 `decision` record to a v2 `feedback` record.
         `variant_slug` is unmappable without API access (OSS) or DB access (internal).
         """
-        return Feedback(company=company, type="decision", **decision)
+        return Feedback(
+            company=company,
+            type="decision",
+            choice_id=decision.get("decision", None),
+            choice_score=decision.get("score", None),
+            decision_context_json=decision.get("context", None),
+            **decision,
+        )
 
     @classmethod
     def from_reward(cls, company: str, reward: Reward) -> List["Feedback"]:
