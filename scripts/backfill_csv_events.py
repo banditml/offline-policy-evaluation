@@ -12,15 +12,12 @@ Assumes CSV schema of:
 """
 
 import argparse
-import csv
-from datetime import datetime
 import itertools
-from typing import Iterable, Any
+from typing import Any, Iterable
 
+import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
-import numpy as np
-import pandas as pd
 
 CHUNK_WRITE_SIZE = 10000
 EVENT_MAPPING = {}
@@ -86,7 +83,7 @@ def main(args):
     print(f"Successfully inserted {num_successes} events.")
 
     if num_fails > 0:
-    print(f"Failed to insert {num_fails} events.")
+        print(f"Failed to insert {num_fails} events.")
         print("Preview of errors:")
         print(f"{all_errors[:5]}")
 
