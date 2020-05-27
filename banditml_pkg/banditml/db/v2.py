@@ -35,7 +35,7 @@ SCHEMA = [
 
 class Feedback:
     def __init__(self, **kwargs):
-        self.timestamp: int = kwargs.get("ts", time.time())
+        self.timestamp: int = kwargs.get("timestamp", time.time())
         self.company: str = kwargs.get("company", None)
         self.experiment_id: str = kwargs.get("experiment_id", None)
         self.mdp_id: str = kwargs.get("mdp_id", None)
@@ -62,6 +62,7 @@ class Feedback:
         `variant_slug` is unmappable without API access (OSS) or DB access (internal).
         """
         return Feedback(
+            timestamp=decision.get("ts", None),
             company=company,
             type="decision",
             choice_id=decision.get("decision", None),
@@ -79,6 +80,7 @@ class Feedback:
         def create_feedback(reward_key, reward_value) -> "Feedback":
             # uses `choice_id` and `reward_type` from scope
             return Feedback(
+                timestamp=reward.get("ts", None),
                 company=company,
                 type="reward",
                 choice_id=choice_id,

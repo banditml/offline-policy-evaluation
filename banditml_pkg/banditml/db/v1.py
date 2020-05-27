@@ -33,8 +33,8 @@ class RewardTable(Table):
 
 
 class DecisionTable(Table):
-    partition_field = "_PARTITIONTIME"
     name = DECISIONS_TABLE
+    partition_field = "_PARTITIONTIME"
 
     def mapper(self, bq_row) -> Decision:
         return {k: v for k, v in bq_row.items()}
