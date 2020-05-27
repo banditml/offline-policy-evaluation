@@ -1,8 +1,8 @@
 """
-Script to fill bigquery feedback table with raw event data.
+Script to backfill bigquery table with rewards.
 
 Usage:
-    python scripts/bakcfill_csv_events.py \
+    python scripts/backfill_rewards.py \
         --csv_path path/to/events.csv \
         --company_name dunder_mifflin \
         --experiment_id backfill
@@ -59,9 +59,9 @@ def main(args):
                 "timestamp": row["ts"],
                 "company": args.company_name,
                 "experiment_id": args.experiment_id,
+                "type": "reward",
+                "reward_metric": row["event"],
                 "mdp_id": row["session_id"],
-                "event": row["event"],
-                "event_category": "reward",
                 "choice_id": row["item_id"],
             }
         )
@@ -91,7 +91,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--csv_path", type=str, help="Path to events csv.", required=True
+        "--csv_path", type=str, help="Path to rewards csv.", required=True
     )
     parser.add_argument(
         "--company_name", type=str, help="Company identifier.", required=True
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         "--experiment_id",
         type=str,
         help="Associated experiment for logs.",
-        required=True,
+        default=None,
     )
     parser.add_argument(
         "--project",
