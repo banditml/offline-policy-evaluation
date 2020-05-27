@@ -1,5 +1,5 @@
 ## How to release package to PyPi:
-## 1) cd in package directory banditml/banditml_pkg/
+## 1) cd in package directory banditml_pkg/
 ## 2) bump version in setup.py
 ## 3) python setup.py sdist bdist_wheel
 ## 4) twine upload dist/* --skip-existing
