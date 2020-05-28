@@ -3,7 +3,7 @@ import random
 import time
 import unittest
 import uuid
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from banditml_pkg.banditml.db.v1 import Base as LegacyBase
 from banditml_pkg.banditml.db.v2 import (
@@ -20,6 +20,25 @@ class TestFeedbackMappers(unittest.TestCase):
     def setUp(self):
         self.faker = Faker()
         self.faker.add_provider(internet)
+
+    def test_to_from_decision(self):
+        expected = Feedback(
+            timestamp=int(time.time()),
+            company="acme",
+            experiment_id="anvils",
+            mdp_id="wil-e-coyote",
+            type="decision",
+            choice_id="defective-anvil",
+            choice_score=-1,
+            variant_id=1,
+            variant_slug="episode-1",
+            decision_id="all-anvils",
+            decision_context_json="{}",
+            reward_type=None,
+            reward_metric=None,
+            reward_value=None,
+        )
+        self.assertEqual(expected.to_dict(), Feedback(**expected.to_dict()).to_dict())
 
     def test_from_decision(self):
         d = {
@@ -103,7 +122,3 @@ class TestFeedbackMappers(unittest.TestCase):
             "metrics": json.dumps(metrics),
             "ts": time.time(),
         }
-
-
-def make_records(experiment_id, num_records) -> Tuple[LegacyBase, ...]:
-    return tuple(LegacyBase(experiment_id=experiment_id) for _ in range(num_records))
