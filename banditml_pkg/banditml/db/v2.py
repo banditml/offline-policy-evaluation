@@ -42,7 +42,7 @@ class Feedback:
         self.type: str = kwargs.get("type", None)
         self.choice_id: Optional[str] = kwargs.get("choice_id", None)
         self.choice_score: Optional[float] = kwargs.get("choice_score", None)
-        self.variant_id: Optional[int] = kwargs.get("variation_id", None)
+        self.variant_id: Optional[int] = kwargs.get("variant_id", None)
         self.variant_slug: Optional[str] = kwargs.get("variant_slug", None)
         self.decision_id: Optional[str] = kwargs.get("decision_id", None)
         self.decision_context_json: Optional[str] = kwargs.get(
@@ -68,6 +68,7 @@ class Feedback:
             choice_id=decision.get("decision", None),
             choice_score=decision.get("score", None),
             decision_context_json=decision.get("context", None),
+            variant_id=decision.get("variation_id", None),
             **decision,
         )
 
