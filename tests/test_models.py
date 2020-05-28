@@ -5,9 +5,6 @@ import unittest
 import uuid
 from typing import Dict, List, Tuple
 
-from faker import Faker
-from faker.providers import internet
-
 from banditml_pkg.banditml.db.v1 import Base as LegacyBase
 from banditml_pkg.banditml.db.v2 import (
     Feedback,
@@ -15,6 +12,8 @@ from banditml_pkg.banditml.db.v2 import (
     REWARD_TYPE_IMMEDIATE,
     Reward,
 )
+from faker import Faker
+from faker.providers import internet
 
 
 class TestFeedbackMappers(unittest.TestCase):
