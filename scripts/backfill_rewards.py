@@ -12,14 +12,12 @@ Assumes CSV schema of:
 """
 
 import argparse
-import csv
-from datetime import datetime
 import itertools
 from typing import Any, Iterable
 
+import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
-import pandas as pd
 
 CHUNK_WRITE_SIZE = 10000
 EVENT_MAPPING = {}

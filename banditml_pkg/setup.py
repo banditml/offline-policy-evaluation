@@ -13,9 +13,9 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="banditml",
-    version="0.5.5",
+    version="0.6.0",
     author="Edoardo Conti, Lionel Vital, Joseph Gilley",
-    author_email="edoardo.conti@gmail.com",
+    author_email="team@banditml.com",
     description="Portable Bandit ML code for training & serving consistency.",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -27,5 +27,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    install_requires=["pandas==1.0.1", "torch==1.4.0", "scikit-learn==0.22.2.post1"],
+    install_requires=[
+        "google-cloud-bigquery~=1.24",
+        "pandas>=1.0.3,<1.1",
+        "scikit-learn>=0.22.2.post1,<0.23",
+        "torch~=1.4",
+    ],
 )
