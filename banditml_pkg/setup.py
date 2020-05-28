@@ -1,8 +1,8 @@
 ## How to release package to PyPi:
 ## 1) cd in package directory banditml_pkg/
 ## 2) bump version in setup.py
-## 3) python setup.py sdist bdist_wheel
-## 4) twine upload dist/* --skip-existing
+## 3) pipenv run python setup.py sdist bdist_wheel
+## 4) pipenv run twine upload dist/* --skip-existing
 ## 5) See new version at https://pypi.org/project/banditml/
 
 
@@ -32,5 +32,6 @@ setuptools.setup(
         "pandas>=1.0.3,<1.1",
         "scikit-learn>=0.22.2.post1,<0.23",
         "torch~=1.4",
+        "typing_extensions>=3.7.4",
     ],
 )
