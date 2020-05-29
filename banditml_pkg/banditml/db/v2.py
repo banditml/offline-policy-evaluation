@@ -103,6 +103,9 @@ class Feedback:
                 choice_id = metric_key
                 inner_metrics = metric_value
                 for inner_metric_key, inner_metric_value in inner_metrics.items():
+                    assert isinstance(inner_metric_key, str)
+                    if not isinstance(inner_metric_value, numbers.Number):
+                        continue
                     feedbacks.append(
                         create_feedback(inner_metric_key, inner_metric_value)
                     )
