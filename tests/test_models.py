@@ -55,6 +55,23 @@ class TestFeedbackMappers(unittest.TestCase):
             self.assertEqual(REWARD_TYPE_IMMEDIATE, f.reward_type)
         self.assert_metrics(metrics, feedbacks)
 
+    def test_from_immediate_reward_with_string_metric_value_skipped(self):
+        metrics = {
+            "price": random.random() * 100.0,
+            "click": random.choice([0, 1]),
+            "purchase": random.random() * 100.0,
+            "bad_metric": "haha strings are da best",
+        }
+        r = self.make_reward(metrics)
+        feedbacks = Feedback.from_reward("tesla", r)
+        self.assertEqual(len(feedbacks), 3, "1 feedback per metric ignoring string")
+        for f in feedbacks:
+            self.assertEqual("tesla", f.company)
+            self.assertEqual("reward", f.type)
+            self.assertEqual(REWARD_TYPE_IMMEDIATE, f.reward_type)
+        metrics.pop("bad_metric")
+        self.assert_metrics(metrics, feedbacks)
+
     def test_from_delayed_reward(self):
         products = ["prod-1", "prod-2", "prod-3"]
         metrics = {}
@@ -82,7 +99,7 @@ class TestFeedbackMappers(unittest.TestCase):
             match_feedback = next(
                 (f for f in feedbacks if f.reward_metric == metric_name), None
             )
-            self.assertIsNotNone(match_feedback)
+            self.assertIsNotNone(match_feedback, f"missing metric for {metric_name}")
             self.assertEqual(metric_value, match_feedback.reward_value)
 
     def assert_match_bq_record(self, r: LegacyBase, f: Feedback, delayed: bool = False):

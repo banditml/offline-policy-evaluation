@@ -108,7 +108,8 @@ class Feedback:
                     )
             else:
                 assert isinstance(metric_key, str)
-                assert isinstance(metric_value, numbers.Number)
+                if not isinstance(metric_value, numbers.Number):
+                    continue
                 choice_id = reward.get("decision")
                 feedbacks.append(create_feedback(metric_key, metric_value))
         return feedbacks
