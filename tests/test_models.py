@@ -45,6 +45,7 @@ class TestFeedbackMappers(unittest.TestCase):
             "price": random.random() * 100.0,
             "click": random.choice([0, 1]),
             "purchase": random.random() * 100.0,
+            "bad_metric": "haha strings are da best",
         }
         r = self.make_reward(metrics)
         feedbacks = Feedback.from_reward("tesla", r)
@@ -53,6 +54,7 @@ class TestFeedbackMappers(unittest.TestCase):
             self.assertEqual("tesla", f.company)
             self.assertEqual("reward", f.type)
             self.assertEqual(REWARD_TYPE_IMMEDIATE, f.reward_type)
+        metrics.pop("bad_metric")
         self.assert_metrics(metrics, feedbacks)
 
     def test_from_delayed_reward(self):
@@ -63,6 +65,7 @@ class TestFeedbackMappers(unittest.TestCase):
                 "price": random.random() * 100.0,
                 "click": random.choice([0, 1]),
                 "purchase": random.random() * 100.0,
+                "bad_metric": "haha strings are way better than non-strings",
             }
         r = self.make_reward(metrics, delayed=True)
         feedbacks = Feedback.from_reward("tesla", r)
@@ -75,6 +78,7 @@ class TestFeedbackMappers(unittest.TestCase):
         for choice, metrics in metrics.items():
             match_feedbacks = [f for f in feedbacks if f.choice_id == choice]
             self.assertTrue(match_feedbacks)
+            metrics.pop("bad_metric")
             self.assert_metrics(metrics, match_feedbacks)
 
     def assert_metrics(self, metrics: Dict, feedbacks: List[Feedback]):
@@ -82,7 +86,7 @@ class TestFeedbackMappers(unittest.TestCase):
             match_feedback = next(
                 (f for f in feedbacks if f.reward_metric == metric_name), None
             )
-            self.assertIsNotNone(match_feedback)
+            self.assertIsNotNone(match_feedback, f"missing metric for {metric_name}")
             self.assertEqual(metric_value, match_feedback.reward_value)
 
     def assert_match_bq_record(self, r: LegacyBase, f: Feedback, delayed: bool = False):
