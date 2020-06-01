@@ -9,7 +9,12 @@ Clone the repo & install the requirements:
 ```
 git clone https://github.com/banditml/banditml.git
 cd banditml
-pipenv install --python 3.7
+
+pipenv install --python 3.8.0
+
+# if that fails, try:
+
+pipenv install --python ~/.pyenv/versions/3.8.0/bin/python
 ```
 You're good to go!
 
