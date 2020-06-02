@@ -1,3 +1,8 @@
+"""
+Usage:
+    python -m 'scripts.migrate_legacy' gcp-project-id gcp-dataset-id
+"""
+
 from typing import Optional
 
 import click
