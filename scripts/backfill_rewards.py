@@ -56,13 +56,13 @@ def main(args):
     for _, row in df.iterrows():
         events_to_insert.append(
             {
-                "timestamp": row["ts"],
+                "timestamp": row["timestamp"],
                 "company": args.company_name,
                 "experiment_id": args.experiment_id,
                 "type": "reward",
                 "reward_metric": row["event"],
                 "mdp_id": row["session_id"],
-                "choice_id": row["item_id"],
+                "choice_id": row["product_id"],
             }
         )
 
