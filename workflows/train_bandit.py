@@ -48,7 +48,7 @@ def train(
     )
 
     raw_data = data_reader.get_training_data()
-    print(raw_data.head())
+
     if len(raw_data) == 0:
         logger.error(f"Got no raws of training data. Training aborted.")
         sys.exit()

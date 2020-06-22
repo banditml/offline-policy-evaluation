@@ -5,14 +5,8 @@ from tests.fixtures import Params, Datasets
 from utils import model_constructors, model_trainers
 from workflows import train_bandit
 
-
-# ==========================================
-# Jonathan added these
 import torch
 import numpy as np
-import sys
-np.set_printoptions(threshold=sys.maxsize)
-import pandas as pd
 
 class TestTrainBandit(unittest.TestCase):
     @classmethod
@@ -192,7 +186,7 @@ class TestTrainBandit(unittest.TestCase):
         )
 
         test_mse = skorch_net.history[-1]["valid_loss"]
-        print("[JONATHAN JOHANNEMANN DEBUG] MSE LOSS OF ORIGINAL IS:",test_mse)
+
         # make sure mse is better or close to out of the box GBDT & MLP
         # the GBDT doesn't need as much training so make tolerance more forgiving
         # also this is learning 2 embedding tables so need more training time
@@ -334,10 +328,6 @@ class TestTrainBandit(unittest.TestCase):
             hyperparams=self.model_params,
             model_name="mixture_density_network",
         )
-        
-        # ===================================================
-        #            Testing the output of MDN
-        # ===================================================
         
         old_data = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"]
         results = skorch_net.predict(old_data)
