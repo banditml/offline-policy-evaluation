@@ -6,6 +6,14 @@ from utils import model_constructors, model_trainers
 from workflows import train_bandit
 
 
+# ==========================================
+# Jonathan added these
+import torch
+import numpy as np
+import sys
+np.set_printoptions(threshold=sys.maxsize)
+import pandas as pd
+
 class TestTrainBandit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -79,7 +87,7 @@ class TestTrainBandit(unittest.TestCase):
         )
 
         test_mse = skorch_net.history[-1]["valid_loss"]
-
+        
         # make sure mse is better or close to out of the box GBDT & MLP
         # the GBDT doesn't need as much training so make tolerance more forgiving
         assert test_mse < self.results_gbdt["mse_test"] * 1.15
@@ -184,7 +192,7 @@ class TestTrainBandit(unittest.TestCase):
         )
 
         test_mse = skorch_net.history[-1]["valid_loss"]
-
+        print("[JONATHAN JOHANNEMANN DEBUG] MSE LOSS OF ORIGINAL IS:",test_mse)
         # make sure mse is better or close to out of the box GBDT & MLP
         # the GBDT doesn't need as much training so make tolerance more forgiving
         # also this is learning 2 embedding tables so need more training time
@@ -293,3 +301,56 @@ class TestTrainBandit(unittest.TestCase):
             training_stats_rf["acc_test"]
             > self.results_gbdt_classification["acc_test"] - 0.03
         )
+        
+    def test_mixture_density_networks_continuous(self):
+
+        model_spec, pytorch_net = model_constructors.build_pytorch_net(
+            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+                "features"
+            ],
+            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+                "product_sets"
+            ],
+            float_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
+                "final_float_feature_order"
+            ],
+            id_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
+                "final_id_feature_order"
+            ],
+            reward_type=Params.ML_PARAMS["reward_type"],
+            layers=self.model_params["layers"],
+            activations=self.model_params["activations"],
+            input_dim=train_bandit.num_float_dim(
+                Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST
+            ),
+            is_mdn=True,
+        )
+
+        skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
+            reward_type=Params.ML_PARAMS["reward_type"],
+            model=pytorch_net,
+            X=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
+            y=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"],
+            hyperparams=self.model_params,
+            model_name="mixture_density_network",
+        )
+        
+        # ===================================================
+        #            Testing the output of MDN
+        # ===================================================
+        
+        old_data = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"]
+        results = skorch_net.predict(old_data)
+        y_vals = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"]
+        
+        b = skorch_net.batch_size
+        v = range(results.shape[0])
+        mu_est = [i for i in v if i//b %2==0]
+        var_est = [i for i in v if i//b %2==1] 
+        mse = np.mean((results[mu_est].flatten()-y_vals.numpy().flatten())**2)
+
+        assert (
+            mse < 25
+        )
+
+    
