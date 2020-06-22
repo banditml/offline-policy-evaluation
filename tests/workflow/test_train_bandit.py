@@ -329,18 +329,16 @@ class TestTrainBandit(unittest.TestCase):
             model_name="mixture_density_network",
         )
         
-        old_data = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"]
-        results = skorch_net.predict(old_data)
-        y_vals = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"]
+        X0 = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"]
+        preds = skorch_net.predict(X0)
+        Y0 = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"]
         
-        b = skorch_net.batch_size
-        v = range(results.shape[0])
-        mu_est = [i for i in v if i//b %2==0]
-        var_est = [i for i in v if i//b %2==1] 
-        mse = np.mean((results[mu_est].flatten()-y_vals.numpy().flatten())**2)
+        b_size = skorch_net.batch_size
+        idx = range(preds.shape[0])
+        mu_est = [i for i in idx if i//b_size %2==0]
+        var_est = [i for i in idx if i//b_size %2==1] 
+        mse = np.mean((preds[mu_est].flatten()-Y0.numpy().flatten())**2)
 
         assert (
             mse < 25
         )
-
-    
