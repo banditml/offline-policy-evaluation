@@ -31,7 +31,7 @@ Models supported:
 - Contextual Bandits (medium datasets)
   - [x] Neural bandit with ε-greedy exploration
   - [x] Neural bandit with UCB-based exploration [(via. dropout exploration)](https://arxiv.org/abs/1506.02142)
-  - [ ] Neural bandit with UCB-based exploration [(via. mixture density networks)](https://publications.aston.ac.uk/id/eprint/373/1/NCRG_94_004.pdf)
+  - [x] Neural bandit with UCB-based exploration [(via. mixture density networks)](https://publications.aston.ac.uk/id/eprint/373/1/NCRG_94_004.pdf)
 - Reinforcement Learning (large datasets)
   - [ ] [Deep Q-learning with ε-greedy exploration](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
   - [ ] [Quantile regression DQN with UCB-based exploration](https://arxiv.org/abs/1710.10044)
