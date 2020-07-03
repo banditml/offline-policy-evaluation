@@ -10,7 +10,7 @@ logger = utils.get_logger(__name__)
 
 
 def fit_custom_pytorch_module_w_skorch(
-    reward_type, model, X, y, hyperparams, train_percent=0.8
+    reward_type, model, X, y, hyperparams, model_name="", train_percent=0.8
 ):
     """Fit a custom PyTorch module using Skorch."""
     logger.info(f"Model input dimension: {model.layers[0].in_features}")
@@ -22,12 +22,34 @@ def fit_custom_pytorch_module_w_skorch(
         # torch's nll_loss wants 1-dim tensors & long type tensors.
         y = y.long().squeeze()
 
-    skorch_net = skorch_func(
+    if model_name == "mixture_density_network":
+
+        # MDN loss seemed to stabilize around 100 iterations, lmk if I should remove this!
+        num_epochs = 2 * hyperparams["max_epochs"]
+
+        class net_func(skorch_func):
+
+            def get_loss(self, y_pred, y_true, X=None, training=False):
+
+                n = y_pred.shape[0]//2
+                mu = y_pred[:n]
+                sigma = y_pred[n:]
+
+                dist = torch.distributions.Normal(loc=mu, scale=sigma)
+                loss = torch.mean(-dist.log_prob(y_true))
+
+                return loss
+
+    else:
+        num_epochs = hyperparams["max_epochs"]
+        net_func = skorch_func
+
+    skorch_net = net_func(
         module=model,
         optimizer=torch.optim.Adam,
         lr=hyperparams["learning_rate"],
         optimizer__weight_decay=hyperparams["l2_decay"],
-        max_epochs=hyperparams["max_epochs"],
+        max_epochs=num_epochs,
         batch_size=hyperparams["batch_size"],
         iterator_train__shuffle=True,
         train_split=dataset.CVSplit(1 - train_percent),

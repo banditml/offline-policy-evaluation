@@ -1,6 +1,5 @@
 import math
 from typing import Dict, List
-
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -50,6 +49,7 @@ class EmbedDnn(nn.Module):
         id_feature_order=[],
         embedding_info={},
         is_classification=False,
+        is_mdn=False,
     ) -> None:
         super().__init__()
         self.layers: nn.ModuleList = nn.ModuleList()
@@ -58,6 +58,7 @@ class EmbedDnn(nn.Module):
         self.use_batch_norm = use_batch_norm
         self.dropout_layers: nn.ModuleList = nn.ModuleList()
         self.use_dropout = dropout_ratio > 0.0
+        self.is_mdn = is_mdn
         self.layer_norm_ops: nn.ModuleList = nn.ModuleList()
         self.use_layer_norm = use_layer_norm
         self.feature_specs = feature_specs
@@ -67,6 +68,7 @@ class EmbedDnn(nn.Module):
         self.embeddings_idx_map = {}
         self.model_spec = {}
         self.is_classification = is_classification
+        self.mdn_layer = nn.ModuleList()
 
         assert len(layers) >= 2, "Invalid layer schema {} for network".format(layers)
 
@@ -85,6 +87,7 @@ class EmbedDnn(nn.Module):
                 )
 
         for i, layer in enumerate(layers[1:]):
+            
             self.layers.append(nn.Linear(layers[i], layer))
             if self.use_batch_norm:
                 self.batch_norm_ops.append(nn.BatchNorm1d(layers[i]))
@@ -95,6 +98,11 @@ class EmbedDnn(nn.Module):
                 # applying dropout to all layers except
                 # the input and the last output layer
                 self.dropout_layers.append(nn.Dropout(p=dropout_ratio))
+                
+            if self.is_mdn and i == (len(layers[1:]) - 1):
+                # appending a separate layer for the variance estimates
+                self.mdn_layer.append(nn.Linear(layers[i], layer))
+                
             gaussian_fill_w_gain(
                 self.layers[i].weight, self.activations[i], layers[i], min_std
             )
@@ -150,8 +158,16 @@ class EmbedDnn(nn.Module):
                 x = getattr(F, activation)(x)
             if self.use_dropout and i < len(self.dropout_layers):
                 x = self.dropout_layers[i](x)
+            if self.is_mdn and i == (len(self.activations)-2):
+                sigma = self.mdn_layer[0](x)
+                m = nn.ELU()
+                sigma = m(sigma) + 1.0
+
 
         if self.is_classification:
             x = F.softmax(x, dim=1)
+
+        if self.is_mdn:
+            x = torch.cat([x, sigma], dim=0)
 
         return x

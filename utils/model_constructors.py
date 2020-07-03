@@ -14,6 +14,7 @@ def build_pytorch_net(
     activations,
     input_dim,
     dropout_ratio=0.0,
+    is_mdn=False,
 ):
     """Build PyTorch model that will be fed into skorch training."""
 
@@ -38,6 +39,7 @@ def build_pytorch_net(
         "id_feature_order": id_feature_order,
         "embedding_info": embedding_info,
         "is_classification": is_classification,
+        "is_mdn": is_mdn,
     }
     return model_spec, EmbedDnn(**model_spec)
 
