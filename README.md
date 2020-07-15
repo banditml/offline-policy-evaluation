@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://banditml.com" target="_blank">
-    <img src="https://gradient-app-bucket-public.s3.amazonaws.com/static/images/bandit_full_logo.png" alt="Bandit ML" height="72">
+    <img src="https://gradient-app-bucket-public.s3.amazonaws.com/static/images/logo.png" alt="Bandit ML" height="72">
   </a>
 </p>
 <p align="center">
