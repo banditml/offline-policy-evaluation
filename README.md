@@ -3,10 +3,6 @@
     <img src="https://gradient-app-bucket-public.s3.amazonaws.com/static/images/logo.png" alt="Bandit ML" height="72">
   </a>
 </p>
-<p align="center">
-  A lightweight & open source framework for personalization
-</p>
-</p>
 
 [![PyPI version](https://badge.fury.io/py/banditml.svg)](https://badge.fury.io/py/banditml) [![](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
