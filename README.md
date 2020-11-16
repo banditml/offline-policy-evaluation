@@ -1,3 +1,4 @@
+
 <p align="center">
   <a href="https://banditml.com" target="_blank">
     <img src="https://gradient-app-bucket-public.s3.amazonaws.com/static/images/logo.png" alt="Bandit ML" height="140">
@@ -7,14 +8,15 @@
 [![PyPI version](https://badge.fury.io/py/banditml.svg)](https://badge.fury.io/py/banditml) [![](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
-# What's Bandit ML?
+# What's bandito?
 
-[Bandit ML](https://www.banditml.com) is a lightweight decision making & personalization framework built by experts from Facebook's applied reinforcement learning team, [Reagent](https://github.com/facebookresearch/ReAgent). Bandit ML gives users access to state of the art contextual bandit and reinforcement learning algorithms through a simple javascript widget.
+[bandito](https://github.com/banditml/bandito) is a lightweight contextual bandit & reinforcement learning library designed to be used in production Python services. This library is developed by [Bandit ML](https://www.banditml.com) and ex-authors of Facebook's applied reinforcement learning platform, [Reagent](https://github.com/facebookresearch/ReAgent).
 
-This repo holds the open source machine learning code that powers [banditml.com](https://www.banditml.com). Specifically, this repo contains:
+Specifically, this repo contains:
 - Feature engineering & preprocessing
 - Model implementations
 - Model training workflows
+- Model serving code for Python services
 
 ## Supported models
 
@@ -46,17 +48,7 @@ Models supported:
 
 ## Docs
 
-If you just want to train a model for free and do everything else yourself these are the docs for you:
-
 [Do it yourself quick start](DOCS.md)
-
-Alternatively, the  [hosted solution](https://www.banditml.com)  offers an end-to-end service for integrating contextual bandit and reinforcement learning algorithms into your application. Specifically, the end-to-end service offers:
-- A UI to create, manage, and view bandit experiments
-- A lightweight javascript client library to log data, get decisions, and provide feedback about decisions
-- A UI to monitor, train, and evaluate bandit models
-- Model understanding & insight tools
-
-The docs to the hosted solution can be found [here](https://www.banditml.com/docs/).
 
 ## License
 
