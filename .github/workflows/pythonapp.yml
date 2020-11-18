@@ -22,14 +22,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
-      uses: VaultVulp/action-pipenv@v2
+      uses: VaultVulp/action-pipenv@v2.0.1
       with:
         command: sync --pre --dev
     - name: Lint with flake8
-      uses: VaultVulp/action-pipenv@v2
+      uses: VaultVulp/action-pipenv@v2.0.1
       with:
         command: run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --select=E9,F63,F7,F82 --show-source --statistics
     - name: Test
-      uses: VaultVulp/action-pipenv@v2
+      uses: VaultVulp/action-pipenv@v2.0.1
       with:
         command: run python -m unittest
