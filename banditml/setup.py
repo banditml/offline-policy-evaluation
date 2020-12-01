@@ -32,7 +32,6 @@ setuptools.setup(
         "pandas~=1.1.4",
         "google-cloud-bigquery~=1.24",
         "scikit-learn>=0.22.2.post1,<0.23",
-        "skorch~=0.9.0"
-        # "typing_extensions>=3.7.4",
+        "skorch~=0.9.0",
     ],
 )
