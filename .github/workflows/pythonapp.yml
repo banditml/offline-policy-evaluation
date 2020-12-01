@@ -13,16 +13,20 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: 3.8
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
     - name: Install pipenv
       uses: dschep/install-pipenv-action@v1
     - name: Install dependencies
       run:  |
-        pipenv sync --pre --dev
+        pipenv install --python 3.8
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names

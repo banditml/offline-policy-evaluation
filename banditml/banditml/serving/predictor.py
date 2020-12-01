@@ -1,14 +1,15 @@
-from collections import defaultdict
 import json
 import logging
 import pickle
 import time
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+
+import torch
 from sklearn import preprocessing
 from sklearn.impute import SimpleImputer
-import torch
 
 from ..models import embed_dnn
 from ..preprocessing import preprocessor
@@ -221,11 +222,11 @@ class BanditPredictor:
                     scores = scores[:, 1:]
 
                 if get_ucb_scores:
-                    
+
                     assert (
                         self.model.use_dropout is True or self.model.is_mdn is True
                     ), "Can only get UCB scores if model was trained with dropout or MDN."
-                    
+
                     # Currently this assumes you only picked one or the other...
                     if self.model.use_dropout:
                         self.model.train()
@@ -235,16 +236,20 @@ class BanditPredictor:
                                 for i in range(self.num_times_to_score)
                             ]
                         )
-                        
-                        ucb_scores = np.percentile(scores_samples, q=95, axis=0).tolist()
+
+                        ucb_scores = np.percentile(
+                            scores_samples, q=95, axis=0
+                        ).tolist()
 
                     else:
                         batch_size = self.model.batch_size
                         idx = range(scores_samples.shape[0])
                         mu_est = [i for i in idx if i // batch_size % 2 == 0]
                         var_est = [i for i in idx if i // batch_size % 2 == 1]
-                        ucb_scores = scores_samples[mu_est] + 1.96 * scores_samples[var_est]
-                    
+                        ucb_scores = (
+                            scores_samples[mu_est] + 1.96 * scores_samples[var_est]
+                        )
+
         elif self.model_type in (
             "linear_bandit",
             "gbdt_bandit",

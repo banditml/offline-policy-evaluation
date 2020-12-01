@@ -1,7 +1,6 @@
-from sklearn import ensemble
-from sklearn import linear_model
+from sklearn import ensemble, linear_model
 
-from banditml_pkg.banditml.models.embed_dnn import build_embedding_spec, EmbedDnn
+from ..models.embed_dnn import EmbedDnn, build_embedding_spec
 
 
 def build_pytorch_net(

@@ -1,11 +1,10 @@
+from typing import Dict, Optional
+
 import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
-from retry import retry
-from typing import Dict, Optional
 
-from utils.utils import get_logger
-
+from ..utils.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -132,7 +131,6 @@ class BigQueryReader:
             and d.experiment_id = "{self.experiment_id}"
         """
 
-    @retry(tries=3, delay=1, backoff=2, logger=logger)
     def adhoc_query(self, query: str) -> pd.DataFrame:
         """Execute adhoc / one-off blocking query."""
         return self.client.query(query).result().to_dataframe()

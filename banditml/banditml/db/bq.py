@@ -4,6 +4,7 @@ from typing import Any, ClassVar, Dict, Iterator, List, Sequence
 
 import google
 from google.cloud import bigquery
+
 from typing_extensions import TypedDict
 
 

@@ -9,11 +9,11 @@ import click
 import google
 from google.cloud import bigquery
 from google.oauth2 import service_account
-from tqdm import tqdm
 
-from banditml_pkg.banditml.db.bq import TableNotFound
-from banditml_pkg.banditml.db.v1 import DecisionTable, RewardTable
-from banditml_pkg.banditml.db.v2 import Feedback, FeedbackTable
+from banditml.db.bq import TableNotFound
+from banditml.db.v1 import DecisionTable, RewardTable
+from banditml.db.v2 import Feedback, FeedbackTable
+from tqdm import tqdm
 
 
 class Migrator:

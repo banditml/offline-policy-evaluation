@@ -8,9 +8,9 @@
 [![PyPI version](https://badge.fury.io/py/banditml.svg)](https://badge.fury.io/py/banditml) [![](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
-# What's bandito?
+# What's banditml?
 
-[bandito](https://github.com/banditml/bandito) is a lightweight contextual bandit & reinforcement learning library designed to be used in production Python services. This library is developed by [Bandit ML](https://www.banditml.com) and ex-authors of Facebook's applied reinforcement learning platform, [Reagent](https://github.com/facebookresearch/ReAgent).
+[banditml](https://github.com/banditml/banditml) is a lightweight contextual bandit & reinforcement learning library designed to be used in production Python services. This library is developed by [Bandit ML](https://www.banditml.com) and ex-authors of Facebook's applied reinforcement learning platform, [Reagent](https://github.com/facebookresearch/ReAgent).
 
 Specifically, this repo contains:
 - Feature engineering & preprocessing
