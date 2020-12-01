@@ -9,6 +9,32 @@ We actively welcome your pull requests.
 4. Run the test suite to ensure tests pass.
 5. Make sure your code lints with `black`.
 
+## Development installation
+Clone the repo & install the development requirements:
+```
+git clone https://github.com/banditml/banditml.git
+cd banditml
+```
+
+`banditml` uses [`pipenv`](https://github.com/pypa/pipenv) to manage its environment.
+```
+pipenv install --python 3.8
+```
+
+You're good to go!
+
+## Running tests
+
+To run all unit tests:
+```
+pipenv run python -m unittest
+```
+
+To run unit tests for one module:
+```
+python -m unittest tests.banditml.serving.test_predictor
+```
+
 ## Issues
 We use GitHub issues to track public bugs. Please ensure your description is
 clear and has sufficient instructions to be able to reproduce the issue.

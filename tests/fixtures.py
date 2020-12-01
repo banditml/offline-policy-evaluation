@@ -1,9 +1,9 @@
-from copy import deepcopy
 import os
+from copy import deepcopy
 
 import pandas as pd
 
-from banditml_pkg.banditml.preprocessing import preprocessor
+from banditml.banditml.preprocessing import preprocessor
 
 
 class Params:

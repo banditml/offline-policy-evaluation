@@ -1,12 +1,13 @@
 import unittest
 
-from banditml_pkg.banditml.models import benchmarks
-from tests.fixtures import Params, Datasets
-from utils import model_constructors, model_trainers
-from workflows import train_bandit
+import numpy as np
 
 import torch
-import numpy as np
+from banditml.banditml.models import benchmarks
+from banditml.banditml.training import train_bandit
+from banditml.banditml.utils import model_constructors, model_trainers
+from tests.fixtures import Datasets, Params
+
 
 class TestTrainBandit(unittest.TestCase):
     @classmethod
@@ -81,7 +82,7 @@ class TestTrainBandit(unittest.TestCase):
         )
 
         test_mse = skorch_net.history[-1]["valid_loss"]
-        
+
         # make sure mse is better or close to out of the box GBDT & MLP
         # the GBDT doesn't need as much training so make tolerance more forgiving
         assert test_mse < self.results_gbdt["mse_test"] * 1.15
@@ -295,7 +296,7 @@ class TestTrainBandit(unittest.TestCase):
             training_stats_rf["acc_test"]
             > self.results_gbdt_classification["acc_test"] - 0.03
         )
-        
+
     def test_mixture_density_networks_continuous(self):
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
@@ -328,17 +329,15 @@ class TestTrainBandit(unittest.TestCase):
             hyperparams=self.model_params,
             model_name="mixture_density_network",
         )
-        
+
         X0 = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"]
         preds = skorch_net.predict(X0)
         Y0 = Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"]
-        
+
         b_size = skorch_net.batch_size
         idx = range(preds.shape[0])
-        mu_est = [i for i in idx if i//b_size %2==0]
-        var_est = [i for i in idx if i//b_size %2==1] 
-        mse = np.mean((preds[mu_est].flatten()-Y0.numpy().flatten())**2)
+        mu_est = [i for i in idx if i // b_size % 2 == 0]
+        var_est = [i for i in idx if i // b_size % 2 == 1]
+        mse = np.mean((preds[mu_est].flatten() - Y0.numpy().flatten()) ** 2)
 
-        assert (
-            mse < 25
-        )
+        assert mse < 25

@@ -1,9 +1,8 @@
 # Do it yourself quick start
 
-This guide walks through training and serving bandit models.
+This guide walks through how to train and serve models.
 
 ## Installation
-`banditml` uses [`pipenv`](https://github.com/pypa/pipenv) to manage its environment.
 
 Clone the repo & install the requirements:
 ```
@@ -129,5 +128,5 @@ python -m unittest
 
 To run unit tests for one module:
 ```
-python -m unittest tests.banditml_pkg.banditml.serving.test_predictor
+python -m unittest tests.banditml.serving.test_predictor
 ```

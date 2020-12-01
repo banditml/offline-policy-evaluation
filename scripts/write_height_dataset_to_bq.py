@@ -12,9 +12,9 @@ import random
 import time
 import uuid
 
+import numpy as np
 from google.cloud import bigquery
 from google.oauth2 import service_account
-import numpy as np
 
 # Bigquery configs
 PROJECT = "gradient-decision"

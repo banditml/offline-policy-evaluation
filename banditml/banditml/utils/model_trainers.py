@@ -1,10 +1,12 @@
 import numpy as np
-from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score
-from sklearn.model_selection import train_test_split
-from skorch import dataset, NeuralNetClassifier, NeuralNetRegressor
-import torch
 
-from utils import utils
+import torch
+from sklearn.metrics import (accuracy_score, log_loss, mean_squared_error,
+                             roc_auc_score)
+from sklearn.model_selection import train_test_split
+from skorch import NeuralNetClassifier, NeuralNetRegressor, dataset
+
+from . import utils
 
 logger = utils.get_logger(__name__)
 
@@ -28,10 +30,9 @@ def fit_custom_pytorch_module_w_skorch(
         num_epochs = 2 * hyperparams["max_epochs"]
 
         class net_func(skorch_func):
-
             def get_loss(self, y_pred, y_true, X=None, training=False):
 
-                n = y_pred.shape[0]//2
+                n = y_pred.shape[0] // 2
                 mu = y_pred[:n]
                 sigma = y_pred[n:]
 

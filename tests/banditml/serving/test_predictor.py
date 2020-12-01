@@ -1,17 +1,16 @@
-from copy import deepcopy
 import json
 import os
 import unittest
+from copy import deepcopy
 
 import numpy as np
 
-from banditml_pkg.banditml.preprocessing import preprocessor
-from banditml_pkg.banditml.serving.predictor import BanditPredictor
+from banditml.banditml.preprocessing import preprocessor
+from banditml.banditml.serving.predictor import BanditPredictor
+from banditml.banditml.training import train_bandit
+from banditml.banditml.utils import model_constructors, model_trainers
 from sklearn.utils import shuffle
-from tests.fixtures import Params, Datasets
-from utils import model_constructors, model_trainers
-from workflows import train_bandit
-
+from tests.fixtures import Datasets, Params
 
 TMP_NET_PATH = os.path.dirname(os.path.abspath(__file__)) + "/test_model.pt"
 TMP_CONFIG_PATH = os.path.dirname(os.path.abspath(__file__)) + "/test_model.json"

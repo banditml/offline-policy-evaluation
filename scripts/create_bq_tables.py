@@ -9,12 +9,11 @@ Usage:
 
 import argparse
 import json
+from typing import Dict, List
 
 import google.api_core.exceptions as gexceptions
 from google.cloud import bigquery
 from google.oauth2 import service_account
-
-from typing import Dict, List
 
 # temp code
 PROJECT = "gradient-decision"

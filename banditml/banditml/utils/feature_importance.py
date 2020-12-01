@@ -2,7 +2,7 @@ from typing import Tuple
 
 import torch
 
-from utils import utils, model_constructors
+from . import model_constructors, utils
 
 logger = utils.get_logger(__name__)
 

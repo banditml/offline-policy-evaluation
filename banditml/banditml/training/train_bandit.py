@@ -3,23 +3,22 @@ Usage:
     python -m workflows.train_bandit \
         --ml_config_path configs/example_ml_config.json \
         --experiment_config_path configs/example_exp_config.json \
-        --predictor_save_dir trained_models \
-        --s3_bucket_to_write_to banditml-models
+        --predictor_save_dir trained_models
 """
 
 import argparse
 import json
 import os
-import time
 import shutil
 import sys
+import time
 from typing import Dict
 
-import boto3
-from data_reader.bandit_reader import BigQueryReader
-from banditml_pkg.banditml.preprocessing import preprocessor
-from banditml_pkg.banditml.serving.predictor import BanditPredictor
-from utils import feature_importance, model_constructors, model_trainers, utils
+from ..data_reader.reader import BigQueryReader
+from ..preprocessing import preprocessor
+from ..serving.predictor import BanditPredictor
+from ..utils import (feature_importance, model_constructors, model_trainers,
+                     utils)
 
 logger = utils.get_logger(__name__)
 
@@ -28,12 +27,7 @@ def num_float_dim(data):
     return len(data["X_float"].columns)
 
 
-def train(
-    ml_params: Dict,
-    experiment_params: Dict,
-    predictor_save_dir: str = None,
-    s3_bucket_to_write_to: str = None,
-):
+def train(ml_params: Dict, experiment_params: Dict, predictor_save_dir: str = None):
 
     logger.info("Initializing data reader...")
     data_reader = BigQueryReader(
@@ -203,22 +197,7 @@ def train(
         predictor_config_path = f"{save_dir}/{model_name}.json"
         predictor.config_to_file(predictor_config_path)
         predictor.model_to_file(predictor_net_path)
-
-        if s3_bucket_to_write_to is not None:
-            logger.info("Writing predictor artifacts to s3...")
-            # Assumes aws credentials stored in ~/.aws/credentials that looks like:
-            # [default]
-            # aws_access_key_id = YOUR_ACCESS_KEY
-            # aws_secret_access_key = YOUR_SECRET_KEY
-            dir_to_zip = save_dir
-            output_path = save_dir
-            shutil.make_archive(output_path, "zip", dir_to_zip)
-            s3_client = boto3.client("s3")
-            s3_client.upload_file(
-                Filename=f"{output_path}.zip",
-                Bucket=s3_bucket_to_write_to,
-                Key=f"{experiment_id}.zip",
-            )
+        shutil.make_archive(save_dir, "zip", save_dir)
 
 
 def main(args):
@@ -249,7 +228,6 @@ def main(args):
         ml_params=ml_params,
         experiment_params=experiment_params,
         predictor_save_dir=args.predictor_save_dir,
-        s3_bucket_to_write_to=args.s3_bucket_to_write_to,
     )
     logger.info("Workflow completed successfully.")
     logger.info(f"Took {time.time() - start} seconds to complete.")
@@ -261,6 +239,5 @@ if __name__ == "__main__":
     parser.add_argument("--experiment_config_path", required=False, type=str)
     parser.add_argument("--experiment_id", required=False, type=str)
     parser.add_argument("--predictor_save_dir", required=False, type=str)
-    parser.add_argument("--s3_bucket_to_write_to", required=False, type=str)
     args = parser.parse_args()
     main(args)
