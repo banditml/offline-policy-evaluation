@@ -32,7 +32,7 @@ pipenv run python -m unittest
 
 To run unit tests for one module:
 ```
-python -m unittest tests.banditml.serving.test_predictor
+pipenv run python -m unittest tests.banditml.serving.test_predictor
 ```
 
 ## Issues
