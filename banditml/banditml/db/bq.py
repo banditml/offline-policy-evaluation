@@ -42,10 +42,12 @@ class Table:
                 "class attribute `name` must be set in order to create table"
             )
         bq_table = bigquery.Table(
-            _fulltable(project_id, dataset_id, cls.name), schema=schema,
+            _fulltable(project_id, dataset_id, cls.name),
+            schema=schema,
         )
         bq_table.time_partitioning = bigquery.TimePartitioning(
-            type_=bigquery.TimePartitioningType.DAY, field=cls.partition_field,
+            type_=bigquery.TimePartitioningType.DAY,
+            field=cls.partition_field,
         )
         bq_table = client.create_table(bq_table)
 

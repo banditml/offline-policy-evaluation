@@ -3,9 +3,8 @@ import logging
 import math
 from typing import Dict, NoReturn
 
-import requests
+import pandas as pd
 
-BANDIT_APP_EXP_CONFIG_URL = "https://www.banditml.com/api/exp_config"
 VALID_MODEL_TYPES = (
     "linear_bandit",
     "neural_bandit",
@@ -63,35 +62,14 @@ def color_text(text: str, color="blue"):
     return f"{ansi_color}{text}{end_color}"
 
 
-def get_experiment_config_from_bandit_app(bandit_app_creds_path, experiment_id):
-    with open(bandit_app_creds_path) as json_file:
-        creds = json.load(json_file)
+def validate_ml_config(ml_config: Dict) -> NoReturn:
+    assert "model_type" in ml_config
+    assert "model_params" in ml_config
+    assert "reward_type" in ml_config
 
-    api_key = creds["api_key"]
-    params = {"experimentId": experiment_id}
-    response = requests.get(
-        url=BANDIT_APP_EXP_CONFIG_URL,
-        params=params,
-        headers={"Authorization": f"ApiKey {api_key}"},
-    )
-
-    if response.status_code != 200:
-        raise Exception(
-            "Get experiment config from bandit app failed with code: "
-            f"{response.status_code}\n"
-        )
-
-    return response.json()
-
-
-def validate_ml_params(ml_params: Dict) -> NoReturn:
-    assert "model_type" in ml_params
-    assert "model_params" in ml_params
-    assert "reward_type" in ml_params
-
-    model_type = ml_params["model_type"]
-    model_params = ml_params["model_params"]
-    reward_type = ml_params["reward_type"]
+    model_type = ml_config["model_type"]
+    model_params = ml_config["model_params"]
+    reward_type = ml_config["reward_type"]
 
     assert (
         model_type in VALID_MODEL_TYPES
@@ -100,6 +78,11 @@ def validate_ml_params(ml_params: Dict) -> NoReturn:
     assert (
         reward_type in VALID_REWARD_TYPES
     ), f"Reward type {reward_type} not supported. Valid reward types are {VALID_REWARD_TYPES}"
+
+
+def validate_training_data_schema(training_df: pd.DataFrame) -> NoReturn:
+    for col in ["context", "decision", "reward", "mdp_id", "sequence_number"]:
+        assert col in training_df.columns
 
 
 def pset_features_have_dense(features: Dict) -> NoReturn:

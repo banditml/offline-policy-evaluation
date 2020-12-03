@@ -116,7 +116,7 @@ class EmbedDnn(nn.Module):
         X_id_list: torch.LongTensor = None,
         X_id_list_idxs: torch.LongTensor = None,
     ) -> torch.FloatTensor:
-        """ Forward pass for generic feed-forward DNNs. Assumes activation names
+        """Forward pass for generic feed-forward DNNs. Assumes activation names
         are valid pytorch activation names.
         """
 

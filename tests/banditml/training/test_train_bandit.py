@@ -4,7 +4,7 @@ import numpy as np
 
 import torch
 from banditml.banditml.models import benchmarks
-from banditml.banditml.training import train_bandit
+from banditml.banditml.training import trainer
 from banditml.banditml.utils import model_constructors, model_trainers
 from tests.fixtures import Datasets, Params
 
@@ -13,8 +13,8 @@ class TestTrainBandit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
 
-        model_type = Params.ML_PARAMS["model_type"]
-        cls.model_params = Params.ML_PARAMS["model_params"][model_type]
+        model_type = Params.ML_CONFIG["model_type"]
+        cls.model_params = Params.ML_CONFIG["model_params"][model_type]
 
         # train benchmark models for continuous rewards
         cls.results_gbdt = benchmarks.fit_sklearn_gbdt_regression(
@@ -57,24 +57,24 @@ class TestTrainBandit(unittest.TestCase):
     def test_pytorch_model_country_as_categorical(self):
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL[
                 "features"
             ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL[
                 "product_sets"
             ],
             float_feature_order=Datasets.DATA_COUNTRY_CATEG[
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_CATEG["final_id_feature_order"],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_CATEG),
+            input_dim=trainer.num_float_dim(Datasets.DATA_COUNTRY_CATEG),
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pytorch_net,
             X=Datasets.X_COUNTRY_CATEG["X_train"],
             y=Datasets.X_COUNTRY_CATEG["y_train"],
@@ -90,24 +90,24 @@ class TestTrainBandit(unittest.TestCase):
 
     def test_pytorch_model_country_as_id_list(self):
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST[
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AS_ID_LIST[
                 "features"
             ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST[
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AS_ID_LIST[
                 "product_sets"
             ],
             float_feature_order=Datasets.DATA_COUNTRY_ID_LIST[
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_ID_LIST["final_id_feature_order"],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_ID_LIST),
+            input_dim=trainer.num_float_dim(Datasets.DATA_COUNTRY_ID_LIST),
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pytorch_net,
             X=Datasets.X_COUNTRY_ID_LIST["X_train"],
             y=Datasets.X_COUNTRY_ID_LIST["y_train"],
@@ -123,10 +123,10 @@ class TestTrainBandit(unittest.TestCase):
 
     def test_pytorch_model_country_as_dense_id_list(self):
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST[
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AS_DENSE_ID_LIST[
                 "features"
             ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST[
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AS_DENSE_ID_LIST[
                 "product_sets"
             ],
             float_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
@@ -135,14 +135,14 @@ class TestTrainBandit(unittest.TestCase):
             id_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
                 "final_id_feature_order"
             ],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_DENSE_ID_LIST),
+            input_dim=trainer.num_float_dim(Datasets.DATA_COUNTRY_DENSE_ID_LIST),
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pytorch_net,
             X=Datasets.X_COUNTRY_DENSE_ID_LIST["X_train"],
             y=Datasets.X_COUNTRY_DENSE_ID_LIST["y_train"],
@@ -158,10 +158,10 @@ class TestTrainBandit(unittest.TestCase):
 
     def test_pytorch_model_country_as_id_list_and_decision_as_id_list(self):
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST[
                 "features"
             ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST[
                 "product_sets"
             ],
             float_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
@@ -170,16 +170,16 @@ class TestTrainBandit(unittest.TestCase):
             id_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
                 "final_id_feature_order"
             ],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(
+            input_dim=trainer.num_float_dim(
                 Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST
             ),
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pytorch_net,
             X=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
             y=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"],
@@ -199,10 +199,10 @@ class TestTrainBandit(unittest.TestCase):
         reward_type = "binary"
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL[
                 "features"
             ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL[
                 "product_sets"
             ],
             float_feature_order=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD[
@@ -214,7 +214,7 @@ class TestTrainBandit(unittest.TestCase):
             reward_type=reward_type,
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(
+            input_dim=trainer.num_float_dim(
                 Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD
             ),
         )
@@ -236,25 +236,25 @@ class TestTrainBandit(unittest.TestCase):
     def test_gbdt_and_random_forest_model_country_as_categorical(self):
 
         gbdt = model_constructors.build_gbdt(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             learning_rate=0.1,
             n_estimators=100,
             max_depth=3,
         )
 
         trained_gbdt_model, training_stats_gbdt = model_trainers.fit_sklearn_model(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=gbdt,
             X=Datasets.X_COUNTRY_CATEG["X_train"],
             y=Datasets.X_COUNTRY_CATEG["y_train"],
         )
 
         random_forest = model_constructors.build_random_forest(
-            reward_type=Params.ML_PARAMS["reward_type"], n_estimators=100, max_depth=3
+            reward_type=Params.ML_CONFIG["reward_type"], n_estimators=100, max_depth=3
         )
 
         trained_rf_model, training_stats_rf = model_trainers.fit_sklearn_model(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=random_forest,
             X=Datasets.X_COUNTRY_CATEG["X_train"],
             y=Datasets.X_COUNTRY_CATEG["y_train"],
@@ -300,10 +300,10 @@ class TestTrainBandit(unittest.TestCase):
     def test_mixture_density_networks_continuous(self):
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST[
                 "features"
             ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST[
                 "product_sets"
             ],
             float_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
@@ -312,17 +312,17 @@ class TestTrainBandit(unittest.TestCase):
             id_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
                 "final_id_feature_order"
             ],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(
+            input_dim=trainer.num_float_dim(
                 Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST
             ),
             is_mdn=True,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pytorch_net,
             X=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
             y=Datasets.X_COUNTRY_AND_DECISION_ID_LIST["y_train"],

@@ -9,7 +9,7 @@ from banditml.banditml.preprocessing import preprocessor
 class Params:
 
     # experiment params for country as ID list variable
-    EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST = {
+    FEATURE_CONFIG_COUNTRY_AS_ID_LIST = {
         "choices": ["male", "female"],
         "features": {
             "country": {"type": "P", "product_set_id": "1", "use_dense": False},
@@ -35,21 +35,21 @@ class Params:
     }
 
     # experiment params for country as categorical variable
-    _tmp = deepcopy(EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST)
+    _tmp = deepcopy(FEATURE_CONFIG_COUNTRY_AS_ID_LIST)
     _tmp["features"]["country"] = {"type": "C"}
-    EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL = _tmp
+    FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL = _tmp
 
     # experiment params for country as dense ID list variable
-    _tmp_1 = deepcopy(EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST)
+    _tmp_1 = deepcopy(FEATURE_CONFIG_COUNTRY_AS_ID_LIST)
     _tmp_1["features"]["country"] = {
         "type": "P",
         "product_set_id": "1",
         "use_dense": True,
     }
-    EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST = _tmp_1
+    FEATURE_CONFIG_COUNTRY_AS_DENSE_ID_LIST = _tmp_1
 
     # experiment params for country as ID list AND decision as ID list variables
-    _tmp_2 = deepcopy(EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST)
+    _tmp_2 = deepcopy(FEATURE_CONFIG_COUNTRY_AS_ID_LIST)
     _tmp_2["features"]["decision"] = {
         "type": "P",
         "product_set_id": "2",
@@ -60,9 +60,9 @@ class Params:
         "dense": {"male": ["male"], "female": ["female"]},
         "features": [{"name": "gender", "type": "C"}],
     }
-    EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST = _tmp_2
+    FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST = _tmp_2
 
-    ML_PARAMS = {
+    ML_CONFIG = {
         "data_reader": {"reward_function": {"height": 1, "nameOfADelayedReward": 1}},
         "reward_type": "regression",
         "model_type": "neural_bandit",
@@ -92,13 +92,13 @@ class Datasets:
     DATASET_PATH = os.path.join(TEST_DIR, TEST_DATASET_DIR, TEST_DATASET_FILENAME)
 
     _raw_data = pd.read_csv(DATASET_PATH)
-    _offset = int(len(_raw_data) * Params.ML_PARAMS["train_percent"])
+    _offset = int(len(_raw_data) * Params.ML_CONFIG["train_percent"])
 
     # dataset for country as categorical variable
     DATA_COUNTRY_CATEG = preprocessor.preprocess_data(
         _raw_data,
-        Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
-        Params.ML_PARAMS["reward_type"],
+        Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
+        Params.ML_CONFIG["reward_type"],
     )
     _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_CATEG)
     X_COUNTRY_CATEG = {
@@ -111,8 +111,8 @@ class Datasets:
     # dataset for country as ID list variable
     DATA_COUNTRY_ID_LIST = preprocessor.preprocess_data(
         _raw_data,
-        Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST,
-        Params.ML_PARAMS["reward_type"],
+        Params.FEATURE_CONFIG_COUNTRY_AS_ID_LIST,
+        Params.ML_CONFIG["reward_type"],
     )
     _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_ID_LIST)
     X_COUNTRY_ID_LIST = {
@@ -133,8 +133,8 @@ class Datasets:
     # dataset for country as dense ID list variable
     DATA_COUNTRY_DENSE_ID_LIST = preprocessor.preprocess_data(
         _raw_data,
-        Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST,
-        Params.ML_PARAMS["reward_type"],
+        Params.FEATURE_CONFIG_COUNTRY_AS_DENSE_ID_LIST,
+        Params.ML_CONFIG["reward_type"],
     )
     _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_DENSE_ID_LIST)
     X_COUNTRY_DENSE_ID_LIST = {
@@ -147,8 +147,8 @@ class Datasets:
     # dataset for country as ID list AND decision as ID list variables
     DATA_COUNTRY_AND_DECISION_ID_LIST = preprocessor.preprocess_data(
         _raw_data,
-        Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST,
-        Params.ML_PARAMS["reward_type"],
+        Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST,
+        Params.ML_CONFIG["reward_type"],
     )
     _X, _y = preprocessor.data_to_pytorch(DATA_COUNTRY_AND_DECISION_ID_LIST)
     X_COUNTRY_AND_DECISION_ID_LIST = {
@@ -174,13 +174,13 @@ class Datasets:
 
     _raw_data_binary_reward = pd.read_csv(BINARY_REWARD_DATASET_PATH)
     _offset_binary_reward = int(
-        len(_raw_data_binary_reward) * Params.ML_PARAMS["train_percent"]
+        len(_raw_data_binary_reward) * Params.ML_CONFIG["train_percent"]
     )
 
     # dataset for country as categorical variable & binary reward
     DATA_COUNTRY_CATEG_BINARY_REWARD = preprocessor.preprocess_data(
         _raw_data_binary_reward,
-        Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+        Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
         "binary",
     )
     _X_binary_reward, _y_binary_reward = preprocessor.data_to_pytorch(

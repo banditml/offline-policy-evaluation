@@ -9,8 +9,12 @@ from faker import Faker
 from faker.providers import internet
 
 from banditml.banditml.db.v1 import Base as LegacyBase
-from banditml.banditml.db.v2 import (REWARD_TYPE_DELAYED, REWARD_TYPE_IMMEDIATE,
-                                   Feedback, Reward)
+from banditml.banditml.db.v2 import (
+    REWARD_TYPE_DELAYED,
+    REWARD_TYPE_IMMEDIATE,
+    Feedback,
+    Reward,
+)
 
 
 class TestFeedbackMappers(unittest.TestCase):

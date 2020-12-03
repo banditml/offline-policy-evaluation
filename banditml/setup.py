@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="banditml",
-    version="0.7.0",
+    version="1.0.0",
     author="Edoardo Conti, Lionel Vital, Joseph Gilley",
     author_email="team@banditml.com",
     description="Lightweight library for training & serving contextual bandit models.",
@@ -28,7 +28,7 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     install_requires=[
-        "torch==1.7.0",
+        "torch~=1.7.0",
         "pandas~=1.1.4",
         "google-cloud-bigquery~=1.24",
         "scikit-learn>=0.22.2.post1,<0.23",

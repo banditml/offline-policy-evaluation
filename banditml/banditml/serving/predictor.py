@@ -22,7 +22,7 @@ class BanditPredictor:
 
     def __init__(
         self,
-        experiment_params,
+        feature_config,
         float_feature_order,
         id_feature_order,
         id_feature_str_to_int_map,
@@ -34,7 +34,7 @@ class BanditPredictor:
         model_spec=None,
         dense_features_to_use=["*"],
     ):
-        self.experiment_params = experiment_params
+        self.feature_config = feature_config
         self.float_feature_order = float_feature_order
         self.id_feature_order = id_feature_order
         self.id_feature_str_to_int_map = id_feature_str_to_int_map
@@ -47,7 +47,7 @@ class BanditPredictor:
         self.dense_features_to_use = dense_features_to_use
 
         # the ordered choices that we need to score over.
-        self.choices = []
+        self.choices = feature_config["choices"]
 
         # if using dropout to get prediction uncertainty, how many times to score
         # the same observation
@@ -66,8 +66,11 @@ class BanditPredictor:
     def preprocess_input(self, input, choices):
         # score input choices or all choices by default if none provided.
         # expand the input across all of these choices
-        self.choices = choices or self.experiment_params["choices"]
-        expanded_input = [dict(input, **{"decision": d}) for d in self.choices]
+        self.scored_choices = choices = choices or self.choices
+        expanded_input = [
+            dict(input, **{preprocessor.DECISION_FEATURE_NAME: d})
+            for d in self.scored_choices
+        ]
 
         df = pd.DataFrame(expanded_input)
         float_feature_array = np.empty((len(df), 0))
@@ -86,7 +89,7 @@ class BanditPredictor:
                     logger.warning(
                         f"'{feature_name}' expected in context, but missing."
                     )
-                    if self.experiment_params["features"][feature_name]["type"] == "C":
+                    if self.feature_config["features"][feature_name]["type"] == "C":
                         df[feature_name] = preprocessor.MISSING_CATEGORICAL_CATEGORY
                     else:
                         df[feature_name] = None
@@ -99,9 +102,9 @@ class BanditPredictor:
             float_feature_array = np.append(float_feature_array, values, axis=1)
 
         for feature_name in self.id_feature_order:
-            meta = self.experiment_params["features"][feature_name]
+            meta = self.feature_config["features"][feature_name]
             product_set_id = meta["product_set_id"]
-            product_set_meta = self.experiment_params["product_sets"][product_set_id]
+            product_set_meta = self.feature_config["product_sets"][product_set_id]
 
             if feature_name not in df.columns:
                 # Handle passing missing product set feature
@@ -270,7 +273,7 @@ class BanditPredictor:
 
         # sort by scores before returning for visual convenience
         scores = scores.squeeze()
-        ids = self.choices
+        ids = self.scored_choices
 
         zipped = zip(scores, ids, ucb_scores)
         sorted_scores = sorted(zipped, reverse=True)
@@ -309,7 +312,7 @@ class BanditPredictor:
         output = {
             "model_type": self.model_type,
             "model_spec": self.model_spec,
-            "experiment_params": self.experiment_params,
+            "feature_config": self.feature_config,
             "float_feature_order": self.float_feature_order,
             "id_feature_order": self.id_feature_order,
             "id_feature_str_to_int_map": self.id_feature_str_to_int_map,
@@ -406,7 +409,7 @@ class BanditPredictor:
             imputers[feature_name] = imputer
 
         return BanditPredictor(
-            experiment_params=config_dict["experiment_params"],
+            feature_config=config_dict["feature_config"],
             float_feature_order=config_dict["float_feature_order"],
             id_feature_order=config_dict["id_feature_order"],
             id_feature_str_to_int_map=config_dict["id_feature_str_to_int_map"],
