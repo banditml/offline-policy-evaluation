@@ -1,0 +1,27 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "mdp_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "sequence_number",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "context",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "decision",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "reward",
+    "type": "FLOAT"
+  }
+]

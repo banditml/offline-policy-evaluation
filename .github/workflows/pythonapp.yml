@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: 3.8
+        python-version: 3.7
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8
+    - name: Set up Python 3.7
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
@@ -26,7 +26,7 @@ jobs:
       uses: dschep/install-pipenv-action@v1
     - name: Install dependencies
       run:  |
-        pipenv install --python 3.8
+        pipenv install --python 3.7
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names

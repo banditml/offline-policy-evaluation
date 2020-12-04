@@ -7,7 +7,7 @@ import numpy as np
 
 from banditml.banditml.preprocessing import preprocessor
 from banditml.banditml.serving.predictor import BanditPredictor
-from banditml.banditml.training import train_bandit
+from banditml.banditml.training import trainer
 from banditml.banditml.utils import model_constructors, model_trainers
 from sklearn.utils import shuffle
 from tests.fixtures import Datasets, Params
@@ -23,8 +23,8 @@ class TestPredictor(unittest.TestCase):
         cls.tmp_net_path = TMP_NET_PATH
         cls.tmp_config_path = TMP_CONFIG_PATH
 
-        cls.model_type = Params.ML_PARAMS["model_type"]
-        cls.model_params = deepcopy(Params.ML_PARAMS["model_params"][cls.model_type])
+        cls.model_type = Params.ML_CONFIG["model_type"]
+        cls.model_params = deepcopy(Params.ML_CONFIG["model_params"][cls.model_type])
         cls.model_params["max_epochs"] = 10
 
     @classmethod
@@ -39,8 +39,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
-            Params.ML_PARAMS["reward_type"],
+            Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
+            Params.ML_CONFIG["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -54,24 +54,20 @@ class TestPredictor(unittest.TestCase):
         }
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
-                "features"
-            ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
-                "product_sets"
-            ],
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL["features"],
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL["product_sets"],
             float_feature_order=Datasets.DATA_COUNTRY_CATEG[
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_CATEG["final_id_feature_order"],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_CATEG),
+            input_dim=trainer.num_float_dim(Datasets.DATA_COUNTRY_CATEG),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            feature_config=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
             float_feature_order=Datasets.DATA_COUNTRY_CATEG["float_feature_order"],
             id_feature_order=Datasets.DATA_COUNTRY_CATEG["id_feature_order"],
             id_feature_str_to_int_map=Datasets.DATA_COUNTRY_CATEG[
@@ -81,12 +77,12 @@ class TestPredictor(unittest.TestCase):
             imputers=Datasets.DATA_COUNTRY_CATEG["imputers"],
             model=pytorch_net,
             model_type=self.model_type,
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pre_serialized_predictor.model,
             X=X_COUNTRY_CATEG["X_train"],
             y=X_COUNTRY_CATEG["y_train"],
@@ -113,8 +109,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST,
-            Params.ML_PARAMS["reward_type"],
+            Params.FEATURE_CONFIG_COUNTRY_AS_ID_LIST,
+            Params.ML_CONFIG["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -135,24 +131,20 @@ class TestPredictor(unittest.TestCase):
         }
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST[
-                "features"
-            ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST[
-                "product_sets"
-            ],
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AS_ID_LIST["features"],
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AS_ID_LIST["product_sets"],
             float_feature_order=Datasets.DATA_COUNTRY_ID_LIST[
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_ID_LIST["final_id_feature_order"],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_ID_LIST),
+            input_dim=trainer.num_float_dim(Datasets.DATA_COUNTRY_ID_LIST),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_ID_LIST,
+            feature_config=Params.FEATURE_CONFIG_COUNTRY_AS_ID_LIST,
             float_feature_order=Datasets.DATA_COUNTRY_ID_LIST["float_feature_order"],
             id_feature_order=Datasets.DATA_COUNTRY_ID_LIST["id_feature_order"],
             id_feature_str_to_int_map=Datasets.DATA_COUNTRY_ID_LIST[
@@ -162,12 +154,12 @@ class TestPredictor(unittest.TestCase):
             imputers=Datasets.DATA_COUNTRY_ID_LIST["imputers"],
             model=pytorch_net,
             model_type=self.model_type,
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pre_serialized_predictor.model,
             X=X_COUNTRY_ID_LIST["X_train"],
             y=X_COUNTRY_ID_LIST["y_train"],
@@ -194,8 +186,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST,
-            Params.ML_PARAMS["reward_type"],
+            Params.FEATURE_CONFIG_COUNTRY_AS_DENSE_ID_LIST,
+            Params.ML_CONFIG["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -208,26 +200,22 @@ class TestPredictor(unittest.TestCase):
         }
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST[
-                "features"
-            ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST[
-                "product_sets"
-            ],
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AS_DENSE_ID_LIST["features"],
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AS_DENSE_ID_LIST["product_sets"],
             float_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
                 "final_float_feature_order"
             ],
             id_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
                 "final_id_feature_order"
             ],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(Datasets.DATA_COUNTRY_DENSE_ID_LIST),
+            input_dim=trainer.num_float_dim(Datasets.DATA_COUNTRY_DENSE_ID_LIST),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_DENSE_ID_LIST,
+            feature_config=Params.FEATURE_CONFIG_COUNTRY_AS_DENSE_ID_LIST,
             float_feature_order=Datasets.DATA_COUNTRY_DENSE_ID_LIST[
                 "float_feature_order"
             ],
@@ -239,12 +227,12 @@ class TestPredictor(unittest.TestCase):
             imputers=Datasets.DATA_COUNTRY_DENSE_ID_LIST["imputers"],
             model=pytorch_net,
             model_type=self.model_type,
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pre_serialized_predictor.model,
             X=X_COUNTRY_DENSE_ID_LIST["X_train"],
             y=X_COUNTRY_DENSE_ID_LIST["y_train"],
@@ -271,8 +259,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST,
-            Params.ML_PARAMS["reward_type"],
+            Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST,
+            Params.ML_CONFIG["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -293,10 +281,10 @@ class TestPredictor(unittest.TestCase):
         }
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST[
                 "features"
             ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST[
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST[
                 "product_sets"
             ],
             float_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
@@ -305,16 +293,14 @@ class TestPredictor(unittest.TestCase):
             id_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
                 "final_id_feature_order"
             ],
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(
-                Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST
-            ),
+            input_dim=trainer.num_float_dim(Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AND_DECISION_AS_ID_LIST,
+            feature_config=Params.FEATURE_CONFIG_COUNTRY_AND_DECISION_AS_ID_LIST,
             float_feature_order=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST[
                 "float_feature_order"
             ],
@@ -328,12 +314,12 @@ class TestPredictor(unittest.TestCase):
             imputers=Datasets.DATA_COUNTRY_AND_DECISION_ID_LIST["imputers"],
             model=pytorch_net,
             model_type=self.model_type,
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model_spec=model_spec,
         )
 
         skorch_net = model_trainers.fit_custom_pytorch_module_w_skorch(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=pre_serialized_predictor.model,
             X=X_COUNTRY_AND_DECISION_ID_LIST["X_train"],
             y=X_COUNTRY_AND_DECISION_ID_LIST["y_train"],
@@ -384,7 +370,7 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
             reward_type,
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
@@ -398,12 +384,8 @@ class TestPredictor(unittest.TestCase):
         }
 
         model_spec, pytorch_net = model_constructors.build_pytorch_net(
-            feature_specs=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
-                "features"
-            ],
-            product_sets=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL[
-                "product_sets"
-            ],
+            feature_specs=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL["features"],
+            product_sets=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL["product_sets"],
             float_feature_order=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD[
                 "final_float_feature_order"
             ],
@@ -413,13 +395,11 @@ class TestPredictor(unittest.TestCase):
             reward_type=reward_type,
             layers=self.model_params["layers"],
             activations=self.model_params["activations"],
-            input_dim=train_bandit.num_float_dim(
-                Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD
-            ),
+            input_dim=trainer.num_float_dim(Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD),
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            feature_config=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
             float_feature_order=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD[
                 "float_feature_order"
             ],
@@ -491,8 +471,8 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
-            Params.ML_PARAMS["reward_type"],
+            Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
+            Params.ML_CONFIG["reward_type"],
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
 
@@ -505,11 +485,11 @@ class TestPredictor(unittest.TestCase):
         }
 
         model = model_constructors.build_gbdt(
-            reward_type=Params.ML_PARAMS["reward_type"]
+            reward_type=Params.ML_CONFIG["reward_type"]
         )
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            feature_config=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
             float_feature_order=Datasets.DATA_COUNTRY_CATEG["float_feature_order"],
             id_feature_order=Datasets.DATA_COUNTRY_CATEG["id_feature_order"],
             id_feature_str_to_int_map=Datasets.DATA_COUNTRY_CATEG[
@@ -519,12 +499,12 @@ class TestPredictor(unittest.TestCase):
             imputers=Datasets.DATA_COUNTRY_CATEG["imputers"],
             model=model,
             model_type="gbdt_bandit",
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model_spec=None,
         )
 
         skorch_net = model_trainers.fit_sklearn_model(
-            reward_type=Params.ML_PARAMS["reward_type"],
+            reward_type=Params.ML_CONFIG["reward_type"],
             model=model,
             X=X_COUNTRY_CATEG["X_train"],
             y=X_COUNTRY_CATEG["y_train"],
@@ -555,7 +535,7 @@ class TestPredictor(unittest.TestCase):
 
         data = preprocessor.preprocess_data(
             raw_data,
-            Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
             reward_type,
             shuffle_data=False,  # don't shuffle so we can test the same observation
         )
@@ -571,7 +551,7 @@ class TestPredictor(unittest.TestCase):
         model = model_constructors.build_linear_model(reward_type=reward_type)
 
         pre_serialized_predictor = BanditPredictor(
-            experiment_params=Params.EXPERIMENT_SPECIFIC_PARAMS_COUNTRY_AS_CATEGORICAL,
+            feature_config=Params.FEATURE_CONFIG_COUNTRY_AS_CATEGORICAL,
             float_feature_order=Datasets.DATA_COUNTRY_CATEG_BINARY_REWARD[
                 "float_feature_order"
             ],

@@ -18,7 +18,7 @@ cd banditml
 
 `banditml` uses [`pipenv`](https://github.com/pypa/pipenv) to manage its environment.
 ```
-pipenv install --python 3.8
+pipenv install --python 3.7
 ```
 
 You're good to go!
@@ -32,7 +32,7 @@ pipenv run python -m unittest
 
 To run unit tests for one module:
 ```
-python -m unittest tests.banditml.serving.test_predictor
+pipenv run python -m unittest tests.banditml.serving.test_predictor
 ```
 
 ## Issues

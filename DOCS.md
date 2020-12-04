@@ -1,114 +1,116 @@
-# Do it yourself quick start
+
+# Quick start
 
 This guide walks through how to train and serve models.
 
 ## Installation
-
-Clone the repo & install the requirements:
 ```
-git clone https://github.com/banditml/banditml.git
-cd banditml
-
-pipenv install --python 3.8.0
-
-# if that fails, try:
-
-pipenv install --python ~/.pyenv/versions/3.8.0/bin/python
+pip install banditml
 ```
-You're good to go!
 
 ## Data format
-Bandit ML expects data to be stored in [Google BigQuery](https://cloud.google.com/bigquery). Specifically, two tables are needed (`decisions` and `rewards`)
+`banditml` expects data to be stored in [Google BigQuery](https://cloud.google.com/bigquery). Specifically, a BigQuery query string should be passed into `banditml.get_dataset(query_str)` that returns a dataset with the following schema:
 
-`decisions` table:
-- <b>experiment_id (STRING)</b>: An ID for the overall experiment this observation is part of.  Models are trained on samples within the same experiment.
+- <b>mdp_id (STRING)</b>: The ID of the markov decision process this sample is a part of. Typically in recommendation problems each individual recommendation is part of an overall session (in this case these samples would be part of the same session ID which would serve as the `mdp_id`). Reinforcement learning algorithms learn over MDPs.
+- <b>sequence_number (INT)</b>: The ordinal position of a decision within an `mdp`.
 - <b>context (STRING)</b>: A JSON string holding a map of the context used to make a decision (i.e. the features that are input to the model). Map values are either `numeric` (for numeric features) or `str` (for categorical or ID list features).
 - <b>decision (STRING)</b>: The decision made.
-- <b>decision_id (STRING)</b>: The ID of this decision. Used to join subsequent rewards to this decision.
-- <b>mdp_id (STRING)</b>: The ID of the markov decision process this sample is a part of. Typically in recommendation problems each individual recommendation is part of an overall session (in this case these samples would be part of the same session ID which would serve as the `mdp_id`). Reinforcement learning algorithms learn over MDPs.
-- <b>variation_id (INT)</b>: An ID indicating which variant of the experiment this decision is a part of. Used to compute A/B test results across variants.
-- <b>ts (INT)</b>: timestamp in seconds of when this decision was made.
-- <b>score (FLOAT)</b>: Optional. A score indicating how good this decision was expected to be. This is typically filled in with your model's prediction of reward.
+- <b>reward (FLOAT)</b>: A score indicating how good this decision was.
 
 Sample records:
 ```
- | row | decision_id | context                      | decision | experiment_id     | mdp_id | variant_id | ts         | score |
- | --- | ----------- | ---------------------------- | -------- | ----------------- | ------ | ---------- | ---------- | ----- |
- | 1   | c2aa520f    | {"country": 2, "year": 1796} | female   | height-prediction | a      | 2          | 1585612647 | 1.3   |
- | 2   | f3e637a5    | {"country": 4, "year": 2017} | male     | height-prediction | b      | 1          | 1585834128 | 0.2   |
+| row | mdp_id | sequence_number | context                      | decision | reward |
+|-----|--------|-----------------|------------------------------|----------|--------|
+|  1  |  u123  |        1        | {"country": 2, "year": 1796} |  female  |  154.2 |
+|  2  |  u456  |        1        | {"country": 4, "year": 2017} |   male   |  170.9 |
 ```
-
-`rewards` table:
-- <b>decision_id (STRING)</b>: The ID of the decision to join this reward to. Sometimes decisions are lists (e.g. ranking problems). In this case all items in the ranked list should be logged as seperate rows and have the same `decision_id` with a numeric `position` feature in `context` to de-bias the position effect in the decision. For `delayed` rewards, `decision_id` is expected to be null. Bandit will assign the reward to the right decision automatically (see below).
-- <b>decision (STRING)</b>: The decision this reward joins to. Rewards are joined using both `decision_id` and `decision` since `decision_id` is not always unique (when decisions are ranked lists of several items). For `delayed` rewards, `decision` is expected to be null.
-- <b>metrics (STRING)</b>: A JSON string holding a map of the reward metrics. Used to construct a reward. Map values are either `int` or `float` (no `str` values).
-- <b>experiment_id (STRING)</b>: See description in `decisions` table above.
-- <b>mdp_id (STRING)</b>: See description in `decisions` table above.
-- <b>ts (INT)</b>: See description in `decisions` table above.
-
-Sample records:
-```
- | Row | decision_id | decision | metrics                          | experiment_id     | mdp_id | ts         |
- | --- | ----------- | -------- | -------------------------------- | ----------------- | ------ | ---------- |
- | 1   | c2aa520f    | female   | {"height": 158.462}              | height-prediction | a      | 1585613418 |
- | 2   | f3e637a5    | male     | {"height": 172.331}              | height-prediction | b      | 1585934016 |
- | 3   |             |          | {"female": {"delayedMetric": 1}} | height-prediction | a      | 1599999016 |
-```
-
-**IMPORTANT:**  <b>*Immediate*</b> rewards vs. <b>*delayed*</b> rewards:
-
-Rewards can be `immediate` (e.g. a click on something recommended) or `delayed` (e.g. a user purchases something you previously recommended at the end of a session after some browsing and after other decisions have been made). In the `rewards` table we handle both of these types of reward and use the following convention to distinguish them. `immedate` rewards should be logged with both a `decision_id` and a `decision` (e.g. rows `1` and `2` above). These reward rows are simply joined to their corresponding rows in the `decisions table`. `delayed` rewards should be logged without a `decision_id` and `decision` (e.g. row `3` above). `delayed` rewards should have keys in `metrics` that correspond to decisions previously made throughout the MDP. banditml joins these delayed rewards to the correct corresponding rows in the `decisions` table based on the `mdp_id` and where those specific decisions were chosen throughout the MDP.
-
-In the example above, `decision_id` `c2aa520f` would get an additional reward for the `delayedMetric` metric at training time. This is because we have a matching delayed reward in row `3` based on `mdp_id` and key `female` in `metrics`.
-
-## Loading data
-The schemas of the 2 BigQuery tables can be found in [scripts/schemas](scripts/schemas).  
-To create the two tables, run:
-
-```
- python scripts/create_bq_tables.py \
-     --project=[MY_GCP_PROJECT]
-```
-Use `--help` to see all the GCP related parameters that can be defined.
-
-To load some dummy data, run:
-```
- python scripts/write_height_dataset_to_bq.py \
-     --project=[MY_GCP_PROJECT]
-```
-Use `--help` to see all the GCP related parameters that can be defined.
 
 ## Training a model
 
-Once data is in BigQuery in the proper format, we can train a model. To train a model, you need to create 2 config files (an experiment config file and an ML config file). These configs specify information about the model, features, data source, and reward function. See [configs](configs/) for a sample of each.
+Once a dataset matching the schema above is fetched, we can train a model. Follow the steps below to get training:
 
-Then, to train a model simply run:
 
+Import `banditml` library:
 ```
- python -m workflows.train_bandit \
-     --ml_config_path configs/example_ml_config.json \
-     --experiment_config_path configs/example_exp_config.json \
-     --predictor_save_dir trained_models
+from banditml.training import trainer
+from banditml.data_reader.reader import BigQueryReader
 ```
 
-This saves model artefacts `model_v1.json` and `model_v1.pt` in `trained_models/test-experiment-height-prediction-v8`.
+Fetch training data:
+```
+bq_reader = BigQueryReader("/path/to/bq_creds.json")
+query_str = "select * from table"
+
+df = bq_reader.get_dataset(query_str)
+```
+
+Define ml config and features config:
+```
+ml_config = {
+  "model_name": "model_v1",
+  "features": {
+    "features_to_use": ["*"],
+    "dense_features_to_use": ["*"]
+  },
+  "feature_importance": {
+    "calc_feature_importance": True,
+    "keep_only_top_n": False,
+    "n": 10
+  },
+  "model_type": "neural_bandit",
+  "reward_type": "binary",
+  "model_params": {
+    "neural_bandit": {
+      "max_epochs": 50,
+      "batch_size": 256,
+      "layers": [-1, 64, 32, -1],
+      "activations": ["relu", "relu", "linear"],
+      "dropout_ratio": 0.2,
+      "learning_rate": 0.001,
+      "l2_decay": 0.001
+    }
+  },
+  "train_percent": 0.85
+}
+```
+
+```
+features_config = {
+	"choices": ["a", "b", "c"],
+  "features": {
+      "total_orders": {"type": "N"},
+      "days_since_last_order": {"type": "N"},
+      "median_days_between_orders": {"type": "N"},
+      "avg_order_size": {"type": "N"},
+      "company_p50_total_orders": {"type": "N"},
+      "company_p50_avg_order_size": {"type": "N"},
+      "company_p50_days_between_orders": {"type": "N"},
+      "decision": {"type": "C"}
+  },
+  "product_sets": {}
+}
+```
+
+Train the model:
+```
+predictor = trainer.train(df, ml_config, features_config)
+```
+
+Or train & save the model artifacts to a local directory:
+```
+# model_v1.json and model_v1.pt saved to /trained_models
+dir = "/trained_models/"
+trainer.train(df, ml_config, features_config, dir)
+```
 
 ## Serving a model
 
-To serve the model in a Python service see the sample workflow `workflows/predict.py`. This module outlines how to use the saved model to serve predictions. You can test your model's predictions by running this workflow:
-
-```
-python -m workflows.predict \
-	--predictor_dir trained_models/test-experiment-height-prediction-v1 \
-    --model_name model_v1
-```
-
-To make model portability easier, you can use the [banditml pip package](https://pypi.org/project/banditml/) to
-serve your model in a Python service like this:
-
+To serve the model in a Python service use the `BanditPredictor` object:
 ```
 from banditml.serving.predictor import BanditPredictor
-
+```
+Pass in the paths to the model artifacts:
+```
 config_path = "/some/model/path/model.json"
 net_path = "/some/model/path/model.pt"
 
@@ -116,17 +118,5 @@ predictor = BanditPredictor.predictor_from_file(config_path, net_path)
 print(predictor.predict({"country": "usa", "year": 1990}))
 
 # Out:
-# {'scores': [[170.55471801757812], [146.3790283203125]], 'ids': ["male", "female"]}
-```
-
-## Running tests
-
-To run all unit tests:
-```
-python -m unittest
-```
-
-To run unit tests for one module:
-```
-python -m unittest tests.banditml.serving.test_predictor
+# {'scores': [[170.55], [146.37]], 'ids': ["male", "female"]}
 ```

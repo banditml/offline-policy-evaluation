@@ -1,7 +1,5 @@
 """
-Script to create BigQuery tables following schema.
-
-Default parameters used to sanity test Bandit ML model implementations.
+Script to create BigQuery tables following training data schema.
 
 Usage:
     python -m scripts/create_bq_tables.py
@@ -79,16 +77,11 @@ def main(args) -> None:
     )
 
     # create decision table
-    with open("scripts/schemas/decisions.json") as decisions_schema:
-        fields = json.load(decisions_schema)
-        create_table(client, args.dataset, "decisions", fields)
+    with open("scripts/schemas/training_data.json") as data_schema:
+        fields = json.load(data_schema)
+        create_table(client, args.dataset, "training_data", fields)
 
-    # create rewards table
-    with open("scripts/schemas/rewards.json") as rewards_schema:
-        fields = json.load(rewards_schema)
-        create_table(client, args.dataset, "rewards", fields)
-
-    print("ML bandit dataset and tables created.")
+    print("Training dataset table created.")
 
 
 if __name__ == "__main__":

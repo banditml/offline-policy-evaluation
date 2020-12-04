@@ -136,7 +136,7 @@ def preprocess_feature(
 
 def preprocess_data(
     raw_data: pd.DataFrame,
-    experiment_params: Dict,
+    feature_config: Dict,
     reward_type: str,
     features_to_use: List[str] = ["*"],
     dense_features_to_use: List[str] = ["*"],
@@ -181,14 +181,14 @@ def preprocess_data(
     logger.info(_sub_dividing_text())
     # order in which to preprocess features
     float_feature_order, id_feature_order = get_preprocess_feature_order(
-        experiment_params["features"], features_to_use
+        feature_config["features"], features_to_use
     )
     # final features names after preprocessing & expansion of categoricals
     final_float_feature_order, final_id_feature_order = [], []
 
     # create product set feature mappings for any product sets
     id_feature_str_to_int_map = {}
-    for product_set, metadata in experiment_params["product_sets"].items():
+    for product_set, metadata in feature_config["product_sets"].items():
         # index 0 in embedding tables is reserved for null id so + 1 below
         id_feature_str_to_int_map[product_set] = {
             v: idx + 1 for idx, v in enumerate(metadata["ids"])
@@ -196,7 +196,7 @@ def preprocess_data(
 
     transforms, imputers = {}, {}
     for feature_name in float_feature_order:
-        meta = experiment_params["features"][feature_name]
+        meta = feature_config["features"][feature_name]
 
         # rather than using a `most_frequent` imputation for categorical features, I
         # think just adding another category of "null" is actually a better idea.
@@ -212,9 +212,9 @@ def preprocess_data(
         imputers[feature_name] = imputer
 
     for feature_name in id_feature_order:
-        meta = experiment_params["features"][feature_name]
+        meta = feature_config["features"][feature_name]
         products_set_id = meta["product_set_id"]
-        product_set_meta = experiment_params["product_sets"][products_set_id]
+        product_set_meta = feature_config["product_sets"][products_set_id]
         logger.info(f"{feature_name} [{meta['type']}]")
 
         if meta["use_dense"] is True and "dense" in product_set_meta:
@@ -298,9 +298,7 @@ def preprocess_data(
         else:
             # sparse id list features need to be converted from string to int,
             # but aside from that are not imputed or transformed.
-            product_set_id = experiment_params["features"][feature_name][
-                "product_set_id"
-            ]
+            product_set_id = feature_config["features"][feature_name]["product_set_id"]
 
             str_to_int_map = id_feature_str_to_int_map[product_set_id]
 
