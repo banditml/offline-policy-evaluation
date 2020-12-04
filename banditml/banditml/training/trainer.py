@@ -176,10 +176,9 @@ def train(
 
     if predictor_save_dir is not None:
         logger.info("Saving predictor artifacts to disk...")
-        experiment_id = feature_config.get("experiment_id", "test")
         model_name = ml_config.get("model_name", "model")
 
-        save_dir = f"{predictor_save_dir}/"
+        save_dir = f"{predictor_save_dir}/{model_name}/"
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 

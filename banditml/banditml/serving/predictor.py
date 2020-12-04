@@ -271,11 +271,13 @@ class BanditPredictor:
         if not ucb_scores:
             ucb_scores = [0.0 for i in range(len(scores))]
 
-        # sort by scores before returning for visual convenience
-        scores = scores.squeeze()
-        ids = self.scored_choices
+        # convert scores to list of floats and round
+        scores = scores.squeeze().tolist()
+        scores = [scores] if not isinstance(scores, list) else scores
+        scores = [round(score, 4) for score in scores]
 
-        zipped = zip(scores, ids, ucb_scores)
+        # sort by scores before returning for visual convenience
+        zipped = zip(scores, self.scored_choices, ucb_scores)
         sorted_scores = sorted(zipped, reverse=True)
         scores, ids, ucb_scores = zip(*sorted_scores)
 

@@ -112,9 +112,9 @@ from banditml.serving.predictor import BanditPredictor
 Pass in the paths to the model artifacts:
 ```
 config_path = "/some/model/path/model.json"
-net_path = "/some/model/path/model.pt"
+model_path = "/some/model/path/model.pt"
 
-predictor = BanditPredictor.predictor_from_file(config_path, net_path)
+predictor = BanditPredictor.predictor_from_file(config_path, model_path)
 print(predictor.predict({"country": "usa", "year": 1990}))
 
 # Out:
