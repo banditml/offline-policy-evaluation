@@ -52,7 +52,7 @@ Models supported:
 pip install banditml
 ```
 
-[Do it yourself quick start](DOCS.md)
+[Get started](DOCS.md)
 
 ## License
 
