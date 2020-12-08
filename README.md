@@ -48,6 +48,10 @@ Models supported:
 
 ## Docs
 
+```
+pip install banditml
+```
+
 [Do it yourself quick start](DOCS.md)
 
 ## License
