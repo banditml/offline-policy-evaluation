@@ -76,7 +76,7 @@ ml_config = {
 
 ```
 features_config = {
-	"choices": ["a", "b", "c"],
+  "choices": ["a", "b", "c"],
   "features": {
       "total_orders": {"type": "N"},
       "days_since_last_order": {"type": "N"},
