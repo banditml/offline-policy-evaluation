@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="offline-evaluation",
-    version="0.0.3",
+    version="0.0.4",
     author="Edoardo Conti, Lionel Vital, Joseph Gilley",
     author_email="team@banditml.com",
     description="Implementations of common offline policy evaluation methods.",
