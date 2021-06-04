@@ -1,0 +1,27 @@
+{
+  "features": {
+    "country": {
+        "type": "P",
+        "product_set_id": "1",
+        "use_dense": true
+    },
+    "year": {"type": "N"},
+    "decision": {"type": "C", "possible_values": ["male", "female"]}
+  },
+  "product_sets": {
+      "1": {
+          "ids": ["usa", "china", "india", "serbia", "norway"],
+          "dense": {
+              "usa": ["north-america", 10.0],
+              "china": ["asia", 8.5],
+              "india": ["asia", 7.5],
+              "serbia": ["europe", 11.5],
+              "norway": ["europe", 10.5]
+          },
+          "features": [
+              {"name": "region", "type": "C"},
+              {"name": "avg_shoe_size_m", "type": "N"}
+          ]
+      }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "model_name": "model_v1",
+  "data_reader": {
+    "features_to_use": ["*"],
+    "dense_features_to_use": ["*"]
+  },
+  "feature_importance": {
+    "calc_feature_importance": true,
+    "keep_only_top_n": false,
+    "n": 10
+  },
+  "model_type": "linear_bandit",
+  "reward_type": "binary",
+  "model_params": {
+    "neural_bandit": {
+      "max_epochs": 50,
+      "batch_size": 64,
+      "layers": [-1, 32, 16, -1],
+      "activations": ["relu", "relu", "linear"],
+      "dropout_ratio": 0.00,
+      "learning_rate": 0.001,
+      "l2_decay": 0.0001
+    },
+    "gbdt_bandit": {
+      "learning_rate": 0.1,
+      "n_estimators": 100,
+      "max_depth": 3
+    },
+    "random_forest_bandit": {
+      "n_estimators": 100,
+      "max_depth": null
+    },
+    "linear_bandit": {
+      "penalty": "l2",
+      "alpha": 1.0
+    }
+  },
+  "train_percent": 0.8
+}
