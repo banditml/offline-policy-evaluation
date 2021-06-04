@@ -1,5 +1,6 @@
 
 # Offline policy evaluation
+[![PyPI version](https://badge.fury.io/py/offline-evaluation.svg)](https://badge.fury.io/py/offline-evaluation) [![](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 Implementations and examples of common offline policy evaluation methods in Python.
 
