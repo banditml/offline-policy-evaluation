@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 
-from ..estimators.linear import fit_ridge_regression
+from ..estimators import linear, gbdt
 
 
 class Predictor:
@@ -26,7 +26,7 @@ class Predictor:
 
     def fit(self, df: pd.DataFrame) -> NoReturn:
         X_train, y_train = self._preprocess_data(df)
-        results = fit_ridge_regression(X_train, y_train)
+        results = gbdt.fit_gbdt_regression(X_train, y_train)
         self.model = results.pop("model")
         self.training_stats = results
 

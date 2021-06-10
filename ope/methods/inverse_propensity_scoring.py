@@ -18,5 +18,5 @@ def evaluate(df: pd.DataFrame, action_prob_function: Callable) -> Dict[str, floa
 
     return {
         "expected_reward_logging_policy": round(df.reward.sum() / len(df), 2),
-        "expected_reward_new_policy": cum_reward_new_policy / len(df),
+        "expected_reward_new_policy": round(cum_reward_new_policy / len(df), 2),
     }

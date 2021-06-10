@@ -1,5 +1,6 @@
 from typing import Dict
 
+import numpy as np
 from sklearn import ensemble
 from sklearn.metrics import accuracy_score, mean_squared_error
 
