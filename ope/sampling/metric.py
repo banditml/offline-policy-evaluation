@@ -3,15 +3,9 @@ from typing import Callable, Dict, Union
 import pandas as pd
 
 
-def mean(series: pd.Series) -> Dict[str, Union[str, float]]:
-    return {"name": "mean", "value": series.mean()}
-
-
-def standard_deviation(series: pd.Series) -> Dict[str, Union[str, float]]:
-    return {"name": "standard deviation", "value": series.std()}
-
-
 def confidence_interval(p_value: float) -> Callable:
+    """Returns a callable which evaluates a confidence interval on a series."""
+
     def get_confidence_interval(series: pd.Series) -> Dict[str, Union[str, float]]:
         mean = series.mean()
         standard_dev = series.std()

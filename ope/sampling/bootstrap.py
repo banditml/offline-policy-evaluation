@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, Dict
+from typing import Callable, Dict, Iterable, Union
 
 import pandas as pd
 from pandas import DataFrame
@@ -10,16 +10,16 @@ def evaluation_and_bootstrap_metrics(
     data: DataFrame,
     evaluator: Callable[[DataFrame], Dict[str, Dict]],
     metrics: Iterable[Callable] = [confidence_interval(0.95)],
-    num_bootstrap_samples: int = 50,
-):
+    num_bootstrap_samples: int = 0,
+) -> Dict[str, Union[Dict, float]]:
+    """Get evaluator results (and bootstrap metrics if number of samples is nonzero)"""
     evaluation = evaluator(data)
 
     if num_bootstrap_samples:
         bootstrap_evaluation = bootstrap_metrics(
             data, evaluator, metrics=metrics, num_samples=num_bootstrap_samples
         )
-        evaluation = {key: {'value': value} for key, value in
-                      evaluation.items()}
+        evaluation = {key: {"value": value} for key, value in evaluation.items()}
 
         for key in evaluation:
             evaluation[key].update(bootstrap_evaluation[key])
@@ -32,8 +32,8 @@ def bootstrap_metrics(
     evaluator: Callable[[DataFrame], Dict[str, Dict]],
     metrics: Iterable[Callable] = [confidence_interval(0.95)],
     num_samples: int = 50,
-):
-
+) -> Dict[str, Dict]:
+    """Get bootstrap metrics for the evaluator and dataset."""
     outcomes = [evaluator(sample) for sample in bootstrap_samples(data, num_samples)]
 
     outcomes_df = pd.DataFrame(outcomes)
@@ -52,6 +52,7 @@ def bootstrap_metrics(
 
 
 def bootstrap_samples(dataframe: DataFrame, num_samples: int) -> Iterable[DataFrame]:
+    """An iterator of bootstrapped samples from the dataframe."""
     num_rows = dataframe.shape[0]
     for _ in range(num_samples):
         yield dataframe.sample(num_rows, replace=True)

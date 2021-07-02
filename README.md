@@ -35,6 +35,12 @@ Conduct the evaluation:
 ```
 doubly_robust.evaluate(df, action_probabilities)
 > {'expected_reward_logging_policy': 3.33, 'expected_reward_new_policy': -28.47}
+
+doubly_robust.evaluate(logs_df, action_probabilities, num_bootstrap_samples=50)
+> {'expected_reward_logging_policy': {'value': 3.33,
+    'confidence_interval_0.95': [-8.583080401464436, 14.317080401464438]},
+   'expected_reward_new_policy': {'value': 2.56,
+    'confidence_interval_0.95': [-116.30282526565165, 64.00162526565165]}}
 ```
 This means the new policy is significantly worse than the logging policy.  Instead of A/B testing this new policy online, it would be better to test some other policies offline first.
 

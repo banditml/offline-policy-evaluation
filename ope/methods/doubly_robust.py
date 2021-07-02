@@ -1,12 +1,15 @@
-from typing import Callable, Dict
+from typing import Callable, Dict, Union
 
 import numpy as np
 import pandas as pd
 
+from ..sampling.bootstrap import evaluation_and_bootstrap_metrics
 from ..training.predictor import Predictor
 
 
-def evaluate(df: pd.DataFrame, action_prob_function: Callable) -> Dict[str, float]:
+def evaluate(
+    df: pd.DataFrame, action_prob_function: Callable, num_bootstrap_samples: int = 0
+) -> Dict[str, Union[Dict, float]]:
     """
     Doubly robust (DR) tutorial:
     https://arxiv.org/pdf/1503.02834.pdf
@@ -15,6 +18,17 @@ def evaluate(df: pd.DataFrame, action_prob_function: Callable) -> Dict[str, floa
     reward_model = Predictor()
     reward_model.fit(df)
 
+    return evaluation_and_bootstrap_metrics(
+        df,
+        lambda data: evaluate_with_model(data, action_prob_function, reward_model),
+        num_bootstrap_samples=num_bootstrap_samples,
+    )
+
+
+def evaluate_with_model(
+    df: pd.DataFrame, action_prob_function: Callable, reward_model: Predictor
+) -> Dict[str, float]:
+    """Evaluate a policy on a dataset with a pre-trained model"""
     context_df = df.context.apply(pd.Series)
     context_array = context_df[reward_model.context_column_order].values
     cum_reward_new_policy = 0
@@ -35,7 +49,7 @@ def evaluate(df: pd.DataFrame, action_prob_function: Callable) -> Dict[str, floa
 
         # then compute the right hand term, which is similar to IPS
         logged_action = row["action"]
-        new_action_probability = action_probabilities[row["action"]]
+        new_action_probability = action_probabilities[logged_action]
         weight = new_action_probability / row["action_prob"]
         one_hot_action = reward_model.action_preprocessor.transform(
             np.array(row["action"]).reshape(-1, 1)
